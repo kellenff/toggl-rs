@@ -1,0 +1,11 @@
+[package]
+name = "toggl"
+version = "0.1.0"
+authors = ["Kellen Frodelius-Fujimoto <kellen@kellenfujimoto.com>"]
+edition = "2018"
+description = "A typed interface to the Toggl v8 API"
+repository = "https://github.com/rakenodiax/toggl-rs"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+
+[dependencies]
