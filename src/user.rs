@@ -1,8 +1,9 @@
-use crate::project::Project;
+use std::rc::Rc;
+
 use crate::workspace::Workspace;
 
-#[derive(Debug,Serialize,Deserialize)]
+#[derive(Debug)]
 pub struct User {
-    fullname: String,
-    workspaces: Vec<Workspace>,
+    pub fullname: String,
+    pub workspaces: Vec<Rc<Workspace>>,
 }

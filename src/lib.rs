@@ -4,6 +4,8 @@ extern crate serde_json;
 extern crate serde_derive;
 extern crate uuid;
 
+use std::rc::Rc;
+
 mod auth;
 mod error;
 mod project;
@@ -16,9 +18,25 @@ pub struct Toggl {
     api_token: String,
     client: reqwest::Client,
     user: crate::user::User,
-    workspaces: Option<Vec<crate::workspace::Workspace>>,
-    projects: Option<Vec<crate::project::Project>>,
+    projects: Option<Vec<Rc<crate::project::Project>>>,
 }
+
+trait Query<T: serde::de::DeserializeOwned> {
+    fn query(&self, url: &str) -> Result<T, crate::error::TogglError>;
+}
+
+impl<T: serde::de::DeserializeOwned> Query<T> for Toggl {
+    fn query(&self, url: &str) -> Result<T, crate::error::TogglError> {
+        let mut resp = self
+            .client
+            .get(url)
+            .basic_auth(&self.api_token, Some("api_token"))
+            .send()?;
+    Ok(resp
+        .json()?)
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
