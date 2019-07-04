@@ -1,17 +1,20 @@
-pub mod auth;
-pub mod error;
+extern crate serde_json;
+#[macro_use]
+extern crate serde_derive;
+
+mod auth;
+mod error;
+mod project;
+mod user;
+mod workspace;
 
 #[cfg(test)]
 mod tests {
     #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-
-    #[test]
     fn test_auth() {
         use crate::auth::init;
-        assert!(init("INVALID").is_ok())
+        let init = init("INVALID");
+        assert!(init.is_ok())
     }
 
 
