@@ -1,39 +1,39 @@
-static COOKIE_AUTH_URL: &'static str = "https://www.toggl.com/api/v8/sessions";
+static AUTH_URL: &'static str = "https://www.toggl.com/api/v8/me";
 
-pub struct Toggl<'a> {
+pub struct Toggl {
     client: reqwest::Client,
-    cookie: reqwest::cookie::Cookie<'a>,
 }
 
-pub enum AuthError {
-    CLIENT_ERROR,
-    COOKIE_ERROR,
-}
-
-impl std::convert::From<reqwest::Error> for AuthError {
-    fn from(e: reqwest::Error) -> AuthError {
-        CLIENT_ERROR
+impl std::convert::From<reqwest::Error> for crate::error::TogglError {
+    fn from(e: reqwest::Error) -> crate::error::TogglError {
+        crate::error::TogglError::ReqwestError(e)
     }
 }
 
-impl std::convert::From<std::option::NoneError> for AuthError {
-    fn from(e: std::option::NoneError) -> AuthError {
-        COOKIE_ERROR
+impl std::convert::From<reqwest::header::InvalidHeaderValue> for crate::error::TogglError {
+    fn from(e: reqwest::header::InvalidHeaderValue) -> crate::error::TogglError {
+        crate::error::TogglError::AuthError("Could not parse Authentication api_token".to_owned())
     }
 }
 
+pub fn init(api_token: &str) -> Result<Toggl, crate::error::TogglError> {
+    let mut headers = reqwest::header::HeaderMap::default();
+    let headerval: reqwest::header::HeaderValue = format!("Basic {}:{}", api_token, "api_token").parse()?;
+    headers.insert(reqwest::header::AUTHORIZATION, headerval);
 
-pub fn init(api_token: &str) -> Result<Toggl, Error> {
-    let client = reqwest::Client::new();
-    let resp = client.post(COOKIE_AUTH_URL)
-        .basic_auth(api_token, Some("api_token"))
+    let client = reqwest::Client::builder()
+        .gzip(true)
+        .default_headers(headers)
+        .build()?;
+    let resp = client.get(AUTH_URL)
         .send()?;
-    let cookie = resp.cookies().next()?;
-
-    Ok(Toggl {
-        client,
-        cookie
-    })
+    if resp.status().is_success() {
+        Ok(Toggl {
+            client,
+        })
+    } else {
+        Err(crate::error::TogglError::AuthError("authentication not succeded".to_owned()))
+    }
 }
 
 
