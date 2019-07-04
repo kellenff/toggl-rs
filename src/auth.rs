@@ -1,6 +1,8 @@
 static AUTH_URL: &'static str = "https://www.toggl.com/api/v8/me";
 
+#[derive(Debug)]
 pub struct Toggl {
+    api_token: String,
     client: reqwest::Client,
 }
 
@@ -17,22 +19,17 @@ impl std::convert::From<reqwest::header::InvalidHeaderValue> for crate::error::T
 }
 
 pub fn init(api_token: &str) -> Result<Toggl, crate::error::TogglError> {
-    let mut headers = reqwest::header::HeaderMap::default();
-    let headerval: reqwest::header::HeaderValue = format!("Basic {}:{}", api_token, "api_token").parse()?;
-    headers.insert(reqwest::header::AUTHORIZATION, headerval);
-
-    let client = reqwest::Client::builder()
-        .gzip(true)
-        .default_headers(headers)
-        .build()?;
-    let resp = client.get(AUTH_URL)
+    let client = reqwest::Client::new();
+    let mut resp = client.get(AUTH_URL)
+        .basic_auth(api_token, Some("api_token"))
         .send()?;
     if resp.status().is_success() {
         Ok(Toggl {
+            api_token: api_token.to_owned(),
             client,
         })
     } else {
-        Err(crate::error::TogglError::AuthError("authentication not succeded".to_owned()))
+        Err(crate::error::TogglError::AuthError(format!("Authentication not succeded: Status {}, Text {}", resp.status(), resp.text().unwrap()).to_owned()))
     }
 }
 
