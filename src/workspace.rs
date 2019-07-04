@@ -1,4 +1,4 @@
-use crate::auth::Toggl;
+use crate::Toggl;
 use crate::project::Project;
 use crate::user::User;
 use crate::error::TogglError;
@@ -9,10 +9,6 @@ pub type WorkspaceID = i64;
 pub struct Workspace {
     id: WorkspaceID,
     name: String,
-}
-
-trait ResolveToWorkspace {
-    fn resolve(&self) -> Workspace;
 }
 
 fn get_projects(u: Toggl, w: Workspace) -> Result<Vec<Project>,TogglError> {

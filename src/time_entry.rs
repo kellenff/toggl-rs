@@ -1,5 +1,6 @@
 use crate::project::ProjectID;
 use crate::workspace::WorkspaceID;
+use crate::Toggl;
 
 #[derive(Deserialize,Debug,Serialize)]
 struct TimeEntry {
@@ -16,10 +17,13 @@ struct TimeEntry {
     uuid: uuid::Uuid,
 }
 
-pub fn get_time_entries(t: &Toggl, from: Option<chrono::DateTime<chrono::Utc>>, to: Option<chrono::DateTime<chrono::Utc>>) -> Vec<TimeEntry> {
-    vec![]
+
+trait TimeEntryTrait {
+    fn get_time_entries(&self) -> Vec<TimeEntry>;
 }
 
-pub fn get_populated_time_entries(t: &Toggl, w: &Vec<Workspace>) -> () {
-
+impl TimeEntryTrait for Toggl {
+    fn get_time_entries(&self) -> Vec<TimeEntry> {
+        vec![]
+    }
 }

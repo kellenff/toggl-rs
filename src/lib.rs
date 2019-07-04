@@ -11,6 +11,15 @@ mod time_entry;
 mod user;
 mod workspace;
 
+#[derive(Debug)]
+pub struct Toggl {
+    api_token: String,
+    client: reqwest::Client,
+    user: crate::user::User,
+    workspaces: Option<Vec<crate::workspace::Workspace>>,
+    projects: Option<Vec<crate::project::Project>>,
+}
+
 #[cfg(test)]
 mod tests {
     #[test]

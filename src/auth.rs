@@ -1,11 +1,6 @@
-static AUTH_URL: &'static str = "https://www.toggl.com/api/v8/me";
+use crate::Toggl;
 
-#[derive(Debug)]
-pub struct Toggl {
-    pub api_token: String,
-    pub client: reqwest::Client,
-    user: crate::user::User,
-}
+static AUTH_URL: &'static str = "https://www.toggl.com/api/v8/me";
 
 impl std::convert::From<reqwest::Error> for crate::error::TogglError {
     fn from(e: reqwest::Error) -> crate::error::TogglError {
@@ -39,6 +34,8 @@ pub fn init(api_token: &str) -> Result<Toggl, crate::error::TogglError> {
             api_token: api_token.to_owned(),
             client,
             user: init_response.data,
+            workspaces: None,
+            projects: None,
         })
     } else {
         Err(crate::error::TogglError::AuthError(format!("Authentication not succeded: Status {}, Text {}", resp.status(), resp.text().unwrap()).to_owned()))
