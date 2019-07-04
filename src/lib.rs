@@ -1,10 +1,13 @@
+extern crate chrono;
 extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
+extern crate uuid;
 
 mod auth;
 mod error;
 mod project;
+mod time_entry;
 mod user;
 mod workspace;
 
