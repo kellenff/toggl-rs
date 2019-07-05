@@ -37,6 +37,13 @@ struct TimeEntryJSON {
     uuid: uuid::Uuid,
 }
 
+#[derive(Serialize, Debug)]
+struct StartEntry {
+    description: String,
+    tag: Vec<String>,
+    pid: i64,
+}
+
 fn convert(p: &[Rc<Project>], w: &[Rc<Workspace>], tjson: TimeEntryJSON) -> TimeEntry {
     let workspace = w.iter().find(|ws| ws.id == tjson.wid).expect("Workspaces was not filled correctly").clone();
     let project = p.iter().find(|p| p.id == tjson.pid).expect("Projects was not filled correctly").clone();
@@ -57,6 +64,13 @@ fn convert(p: &[Rc<Project>], w: &[Rc<Workspace>], tjson: TimeEntryJSON) -> Time
 
 trait TimeEntryTrait {
     fn get_time_entries(&mut self) -> Result<Vec<TimeEntry>, TogglError>;
+    fn get_time_entries_range(&self, start: Option<chrono::DateTime<chrono::Utc>>, end: Option<chrono::DateTime<chrono::Utc>>) -> Result<Vec<TimeEntry>, TogglError>;
+    fn start_entry(&self, description: &str, tags: &[String], p: &Project) -> Result<(), TogglError>;
+    fn stop_entry(&self, t: &TimeEntry) -> Result<(), TogglError>;
+    fn get_entry_details(&self, id: i64) -> Result<TimeEntry, TogglError>;
+    fn get_running_entry(&self) -> Result<TimeEntry, TogglError>;
+    fn update_entry(&self, t: &TimeEntry) -> Result<(), TogglError>;
+    fn delete_entry(&self, t: &TimeEntry) -> Result<(), TogglError>;
 }
 
 impl TimeEntryTrait for Toggl {
@@ -72,5 +86,22 @@ impl TimeEntryTrait for Toggl {
             .into_iter()
             .map(|tjson| convert(p, &self.user.workspaces, tjson))
             .collect())
+    }
+
+    fn start_entry(&self, description: &str, tags: &[String], p: &Project) -> Result<(), TogglError> {
+        let t = StartEntry {description, tags, pid: p.id };
+        self.post("https://www.toggl.com/api/v8/time_entries/start", t)
+    }
+
+    fn stop_entry(&self, t: &TimeEntry) -> Result<(), TogglError> {
+        self.put(format!("https://www.toggl.com/api/v8/time_entries/{}/stop", t.id))?;
+    }
+
+    fn get_entry_details(&self, id: i64) -> Result<TimeEntry, TogglError> {
+        self.get(format!("https://www.toggl.com/api/v8/time_entries/{}", id))
+    }
+
+    fn get_running_entry(&self) -> Result<TimeEntry, TogglError> {
+        self.get("https://www.toggl.com/api/v8/time_entries/current")
     }
 }

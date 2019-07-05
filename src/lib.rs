@@ -23,6 +23,8 @@ pub struct Toggl {
 
 trait Query<T: serde::de::DeserializeOwned> {
     fn query(&self, url: &str) -> Result<T, crate::error::TogglError>;
+    fn post(&self, url: &str, t: &T) -> Result<(), crate::error::TogglError>;
+    fn put(&self, url: &str) -> Result<(), crate::error::TogglError>;
 }
 
 impl<T: serde::de::DeserializeOwned> Query<T> for Toggl {
@@ -35,6 +37,24 @@ impl<T: serde::de::DeserializeOwned> Query<T> for Toggl {
     Ok(resp
         .json()?)
     }
+
+    fn post(&self, url: &str, t: &T) -> Result<(), crate::error::TogglError> {
+        self
+            .client
+            .post(url)
+            .json(t)
+            .basic_auth(&self.api_token, Some("api_token"))
+            .send()?;
+    }
+
+    fn put(&self, url: &str) -> Result<(), crate::error::TogglError> {
+        self
+            .client
+            .put(url)
+            .basic_auth(&self.api_token, Some("api_token"))
+            .send()?;
+    }
+
 }
 
 
