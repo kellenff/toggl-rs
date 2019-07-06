@@ -105,18 +105,16 @@ impl TimeEntryTrait for Toggl {
                 } else {
                     format!("https://www.toggl.com/api/v8/time_entries?start_date={}", s)
                 }
+            } else if let Some(e) = end {
+                format!("https://www.toggl.com/api/v8/time_entries?end_date={}", e)
             } else {
-                if let Some(e) = end {
-                    format!("https://www.toggl.com/api/v8/time_entries?end_date={}", e)
-                } else {
-                    format!("https://www.toggl.com/api/v8/time_entries")
-                }
+                "https://www.toggl.com/api/v8/time_entries".to_string()
             };
-                    if self.projects.is_none() {
-            self.fill_projects();
-        }
-        let res: Vec<TimeEntryJSON> = self.get(&url)?;
-        Ok(self.convert_response(&res))
+            if self.projects.is_none() {
+                self.fill_projects();
+            }
+            let res: Vec<TimeEntryJSON> = self.get(&url)?;
+            Ok(self.convert_response(&res))
     }
 
     fn start_entry(&self, description: &str, tags: &[String], p: &Project) -> Result<(), TogglError> {
@@ -156,7 +154,7 @@ impl TimeEntryTrait for Toggl {
 
     fn convert_response(&self, res: &[TimeEntryJSON]) -> Vec<TimeEntry> {
         res
-        .into_iter()
+        .iter()
         .map(|tjson| convert(self.projects.as_ref().unwrap_or(&[].to_vec()), &self.user.workspaces, tjson))
         .collect()
     }
