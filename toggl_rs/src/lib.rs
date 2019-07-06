@@ -54,7 +54,7 @@ impl Query for Toggl {
             self
                 .client
                 .put(url)
-                .json(t)
+                .json(l)
                 .basic_auth(&self.api_token, Some("api_token"))
                 .send()?;
         } else {

@@ -73,7 +73,7 @@ fn convert(p: &[Rc<Project>], w: &[Rc<Workspace>], tjson: &TimeEntryJSON) -> Tim
         start: tjson.start,
         stop: tjson.stop,
         duration: tjson.duration,
-        description: tjson.description,
+        description: tjson.description.clone(),
         duronly: tjson.duronly,
         at: tjson.at,
         uuid: tjson.uuid,
@@ -82,7 +82,7 @@ fn convert(p: &[Rc<Project>], w: &[Rc<Workspace>], tjson: &TimeEntryJSON) -> Tim
 
 trait TimeEntryTrait {
     fn get_time_entries(&mut self) -> Result<Vec<TimeEntry>, TogglError>;
-    fn get_time_entries_range(&self, start: Option<chrono::DateTime<chrono::Utc>>, end: Option<chrono::DateTime<chrono::Utc>>) -> Result<Vec<TimeEntry>, TogglError>;
+    fn get_time_entries_range(&mut self, start: Option<chrono::DateTime<chrono::Utc>>, end: Option<chrono::DateTime<chrono::Utc>>) -> Result<Vec<TimeEntry>, TogglError>;
     fn start_entry(&self, description: &str, tags: &[String], p: &Project) -> Result<(), TogglError>;
     fn stop_entry(&self, t: &TimeEntry) -> Result<(), TogglError>;
     fn get_entry_details(&self, id: i64) -> Result<TimeEntry, TogglError>;
@@ -97,7 +97,7 @@ impl TimeEntryTrait for Toggl {
         self.get_time_entries_range(None, None)
     }
 
-    fn get_time_entries_range(&self, start: Option<chrono::DateTime<chrono::Utc>>,
+    fn get_time_entries_range(&mut self, start: Option<chrono::DateTime<chrono::Utc>>,
         end: Option<chrono::DateTime<chrono::Utc>>) -> Result<Vec<TimeEntry>, TogglError> {
             let url = if let Some(s) = start {
                 if let Some(e) = end {
@@ -115,10 +115,7 @@ impl TimeEntryTrait for Toggl {
                     if self.projects.is_none() {
             self.fill_projects();
         }
-
-        let p = self.projects.as_ref().unwrap();
-
-        let res: Vec<TimeEntryJSON> = self.get("https://www.toggl.com/api/v8/time_entries")?;
+        let res: Vec<TimeEntryJSON> = self.get(&url)?;
         Ok(self.convert_response(&res))
     }
 
@@ -139,18 +136,18 @@ impl TimeEntryTrait for Toggl {
     fn get_entry_details(&self, id: i64) -> Result<TimeEntry, TogglError> {
         self.get(&format!("https://www.toggl.com/api/v8/time_entries/{}", id))
             .map(|r| self.convert_response(&[r]))
-            .map(|v| v[0])
+            .map(|mut v| v.swap_remove(0))  //this makes the borrowchecker work
     }
 
     fn get_running_entry(&self) -> Result<TimeEntry, TogglError> {
         self.get("https://www.toggl.com/api/v8/time_entries/current")
             .map(|r| self.convert_response(&[r]))
-            .map(|v| v[0])
+            .map(|mut v| v.swap_remove(0)) //this makes the borrowchecker work
     }
 
     fn update_entry(&self, t: TimeEntry) -> Result<(), TogglError> {
         let entry: TimeEntryJSON = t.into();
-        self.put(&format!("https://www.toggl.com/api/v8/time_entries/{}", t.id), &Some(entry))
+        self.put(&format!("https://www.toggl.com/api/v8/time_entries/{}", entry.id), &Some(entry))
     }
 
     fn delete_entry(&self, t: &TimeEntry) -> Result<(), TogglError> {
@@ -160,7 +157,7 @@ impl TimeEntryTrait for Toggl {
     fn convert_response(&self, res: &[TimeEntryJSON]) -> Vec<TimeEntry> {
         res
         .into_iter()
-        .map(|tjson| convert(&self.projects.unwrap_or([].to_vec()), &self.user.workspaces, tjson))
+        .map(|tjson| convert(self.projects.as_ref().unwrap_or(&[].to_vec()), &self.user.workspaces, tjson))
         .collect()
     }
 }
