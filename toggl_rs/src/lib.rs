@@ -21,14 +21,15 @@ pub struct Toggl {
     projects: Option<Vec<Rc<crate::project::Project>>>,
 }
 
-trait Query<T: serde::de::DeserializeOwned> {
-    fn query(&self, url: &str) -> Result<T, crate::error::TogglError>;
-    fn post(&self, url: &str, t: &T) -> Result<(), crate::error::TogglError>;
-    fn put(&self, url: &str) -> Result<(), crate::error::TogglError>;
+trait Query {
+    fn get<T: serde::de::DeserializeOwned>(&self, url: &str) -> Result<T, crate::error::TogglError>;
+    fn post<T: serde::ser::Serialize>(&self, url: &str, t: &T) -> Result<(), crate::error::TogglError>;
+    fn put<T: serde::ser::Serialize>(&self, url: &str) -> Result<(), crate::error::TogglError>;
+    fn delete(&self, url: &str) -> Result<(), crate::error::TogglError>;
 }
 
-impl<T: serde::de::DeserializeOwned> Query<T> for Toggl {
-    fn query(&self, url: &str) -> Result<T, crate::error::TogglError> {
+impl Query for Toggl {
+    fn get<T: serde::de::DeserializeOwned>(&self, url: &str) -> Result<T, crate::error::TogglError> {
         let mut resp = self
             .client
             .get(url)
@@ -38,21 +39,32 @@ impl<T: serde::de::DeserializeOwned> Query<T> for Toggl {
         .json()?)
     }
 
-    fn post(&self, url: &str, t: &T) -> Result<(), crate::error::TogglError> {
+    fn post<T: serde::ser::Serialize>(&self, url: &str, t: &T) -> Result<(), crate::error::TogglError> {
         self
             .client
             .post(url)
             .json(t)
             .basic_auth(&self.api_token, Some("api_token"))
             .send()?;
+        Ok(())
     }
 
-    fn put(&self, url: &str) -> Result<(), crate::error::TogglError> {
+    fn put<T: serde::ser::Serialize>(&self, url: &str) -> Result<(), crate::error::TogglError> {
         self
             .client
             .put(url)
             .basic_auth(&self.api_token, Some("api_token"))
             .send()?;
+        Ok(())
+    }
+
+    fn delete(&self, url: &str) -> Result<(), crate::error::TogglError> {
+        self
+            .client
+            .delete(url)
+            .basic_auth(&self.api_token, Some("api_token"))
+            .send()?;
+        Ok(())
     }
 
 }

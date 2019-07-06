@@ -40,7 +40,7 @@ struct TimeEntryJSON {
 #[derive(Serialize, Debug)]
 struct StartEntry {
     description: String,
-    tag: Vec<String>,
+    tags: Vec<String>,
     pid: i64,
 }
 
@@ -71,37 +71,77 @@ trait TimeEntryTrait {
     fn get_running_entry(&self) -> Result<TimeEntry, TogglError>;
     fn update_entry(&self, t: &TimeEntry) -> Result<(), TogglError>;
     fn delete_entry(&self, t: &TimeEntry) -> Result<(), TogglError>;
+    fn convert_response(&self, t: &[TimeEntryJSON]) -> Vec<TimeEntry>;
 }
 
 impl TimeEntryTrait for Toggl {
     fn get_time_entries(&mut self) -> Result<Vec<TimeEntry>, TogglError> {
-        if self.projects.is_none() {
+        self.get_time_entries_range(None, None)
+    }
+
+    fn get_time_entries_range(&self, start: Option<chrono::DateTime<chrono::Utc>>,
+        end: Option<chrono::DateTime<chrono::Utc>>) -> Result<Vec<TimeEntry>, TogglError> {
+            let url = if let Some(s) = start {
+                if let Some(e) = end {
+                    format!("https://www.toggl.com/api/v8/time_entries?start_date={}&end_date={}", s, e)
+                } else {
+                    format!("https://www.toggl.com/api/v8/time_entries?start_date={}", s)
+                }
+            } else {
+                if let Some(e) = end {
+                    format!("https://www.toggl.com/api/v8/time_entries?end_date={}", e)
+                } else {
+                    format!("https://www.toggl.com/api/v8/time_entries")
+                }
+            };
+                    if self.projects.is_none() {
             self.fill_projects();
         }
 
         let p = self.projects.as_ref().unwrap();
 
-        let res: Vec<TimeEntryJSON> = self.query("https://www.toggl.com/api/v8/time_entries")?;
-        Ok(res
-            .into_iter()
-            .map(|tjson| convert(p, &self.user.workspaces, tjson))
-            .collect())
+        let res: Vec<TimeEntryJSON> = self.get("https://www.toggl.com/api/v8/time_entries")?;
+        Ok(self.convert_response(&res))
     }
 
     fn start_entry(&self, description: &str, tags: &[String], p: &Project) -> Result<(), TogglError> {
-        let t = StartEntry {description, tags, pid: p.id };
-        self.post("https://www.toggl.com/api/v8/time_entries/start", t)
+        let t = StartEntry {
+            description: description.to_owned(),
+            tags: tags.to_owned(),
+            pid: p.id
+        };
+        self.post("https://www.toggl.com/api/v8/time_entries/start", &t)
     }
 
     fn stop_entry(&self, t: &TimeEntry) -> Result<(), TogglError> {
-        self.put(format!("https://www.toggl.com/api/v8/time_entries/{}/stop", t.id))?;
+        self.put(&format!("https://www.toggl.com/api/v8/time_entries/{}/stop", t.id))?;
+        Ok(())
     }
 
     fn get_entry_details(&self, id: i64) -> Result<TimeEntry, TogglError> {
-        self.get(format!("https://www.toggl.com/api/v8/time_entries/{}", id))
+        self.get(&format!("https://www.toggl.com/api/v8/time_entries/{}", id))
+            .map(|r| self.convert_response(&[r]))
+            .map(|v| v[0])
     }
 
     fn get_running_entry(&self) -> Result<TimeEntry, TogglError> {
         self.get("https://www.toggl.com/api/v8/time_entries/current")
+            .map(|r| self.convert_response(&[r]))
+            .map(|v| v[0])
+    }
+
+    fn update_entry(&self, t: &TimeEntry) -> Result<(), TogglError> {
+        self.put(&format!("https://www.toggl.com/api/v8/time_entries/{}", t.id), t)
+    }
+
+    fn delete_entry(&self, t: &TimeEntry) -> Result<(), TogglError> {
+        self.delete(&format!("https://www.toggl.com/api/v8/time_entries/{}", t.id)
+    }
+
+    fn convert_response(&self, res: &[TimeEntryJSON]) -> Vec<TimeEntry> {
+        res
+        .into_iter()
+        .map(|tjson| convert(self.projects, &self.user.workspaces, tjson))
+        .collect()
     }
 }

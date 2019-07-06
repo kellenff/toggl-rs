@@ -1,5 +1,5 @@
 [package]
-name = "toggl"
+name = "toggl_rs"
 version = "0.1.0"
 authors = ["Kellen Frodelius-Fujimoto <kellen@kellenfujimoto.com>"]
 edition = "2018"
@@ -8,7 +8,10 @@ repository = "https://github.com/rakenodiax/toggl-rs"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 
-[workspace]
-
 [dependencies]
-toggl_rs = {path = "toggl_rs"}
+chrono = { version ="0.4", features = ["serde"] }
+reqwest = "0.9"
+serde = "1.0"
+serde_derive = "1.0"
+serde_json = "1.0"
+uuid = { version = "0.7", features = ["serde", "v4"] }

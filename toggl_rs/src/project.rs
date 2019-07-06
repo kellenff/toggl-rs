@@ -26,7 +26,7 @@ impl ProjectTrait for Toggl {
             .iter().flat_map(|w| {
                 let url = format!("https://www.toggl.com/api/v8/workspaces/{}/projects", w.id);
                 let res: Vec<Project> = self
-                    .query(&url)
+                    .get(&url)
                     .expect("Error in querying");
                 res.into_iter()
                     .map(Rc::new)
