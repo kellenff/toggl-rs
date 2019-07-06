@@ -3,7 +3,7 @@ use std::rc::Rc;
 use crate::Toggl;
 use crate::Query;
 
-type Projects = Vec<Rc<Project>>;
+pub type Projects = Vec<Rc<Project>>;
 
 #[derive(Deserialize, Debug, Serialize)]
 pub struct Project {

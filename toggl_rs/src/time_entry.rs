@@ -57,10 +57,17 @@ impl From<TimeEntry> for TimeEntryJSON {
 
 #[derive(Serialize, Debug)]
 struct StartEntry {
+    time_entry: StartTimeEntry,
+}
+
+#[derive(Serialize, Debug)]
+struct StartTimeEntry {
     description: String,
     tags: Vec<String>,
     pid: i64,
+    created_with: String,
 }
+
 
 fn convert(p: &[Rc<Project>], w: &[Rc<Workspace>], tjson: &TimeEntryJSON) -> TimeEntry {
     let workspace = w.iter().find(|ws| ws.id == tjson.wid).expect("Workspaces was not filled correctly").clone();
@@ -80,7 +87,7 @@ fn convert(p: &[Rc<Project>], w: &[Rc<Workspace>], tjson: &TimeEntryJSON) -> Tim
     }
 }
 
-trait TimeEntryTrait {
+pub trait TimeEntryExt {
     fn get_time_entries(&mut self) -> Result<Vec<TimeEntry>, TogglError>;
     fn get_time_entries_range(&mut self, start: Option<chrono::DateTime<chrono::Utc>>, end: Option<chrono::DateTime<chrono::Utc>>) -> Result<Vec<TimeEntry>, TogglError>;
     fn start_entry(&self, description: &str, tags: &[String], p: &Project) -> Result<(), TogglError>;
@@ -89,10 +96,13 @@ trait TimeEntryTrait {
     fn get_running_entry(&self) -> Result<TimeEntry, TogglError>;
     fn update_entry(&self, t: TimeEntry) -> Result<(), TogglError>;
     fn delete_entry(&self, t: &TimeEntry) -> Result<(), TogglError>;
+}
+
+trait TimeEntryTrait {
     fn convert_response(&self, t: &[TimeEntryJSON]) -> Vec<TimeEntry>;
 }
 
-impl TimeEntryTrait for Toggl {
+impl TimeEntryExt for Toggl {
     fn get_time_entries(&mut self) -> Result<Vec<TimeEntry>, TogglError> {
         self.get_time_entries_range(None, None)
     }
@@ -118,10 +128,14 @@ impl TimeEntryTrait for Toggl {
     }
 
     fn start_entry(&self, description: &str, tags: &[String], p: &Project) -> Result<(), TogglError> {
-        let t = StartEntry {
-            description: description.to_owned(),
-            tags: tags.to_owned(),
-            pid: p.id
+        let t =
+            StartEntry {
+                time_entry: StartTimeEntry {
+                    description: description.to_owned(),
+                    tags: tags.to_owned(),
+                    pid: p.id,
+                    created_with: "toggl-rs".to_string(),
+                }
         };
         self.post("https://www.toggl.com/api/v8/time_entries/start", &t)
     }
@@ -152,6 +166,9 @@ impl TimeEntryTrait for Toggl {
         self.delete(&format!("https://www.toggl.com/api/v8/time_entries/{}", t.id))
     }
 
+}
+
+impl TimeEntryTrait for Toggl {
     fn convert_response(&self, res: &[TimeEntryJSON]) -> Vec<TimeEntry> {
         res
         .iter()
