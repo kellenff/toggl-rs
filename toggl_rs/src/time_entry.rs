@@ -37,6 +37,24 @@ struct TimeEntryJSON {
     uuid: uuid::Uuid,
 }
 
+impl From<TimeEntry> for TimeEntryJSON {
+    fn from(t: TimeEntry) -> Self {
+        TimeEntryJSON {
+            id: t.id,
+            guid: t.guid,
+            wid: t.workspace.id,
+            pid: t.project.id,
+            start: t.start,
+            stop: t.stop,
+            duration: t.duration,
+            description: t.description,
+            duronly: t.duronly,
+            at: t.at,
+            uuid: t.uuid,
+        }
+    }
+}
+
 #[derive(Serialize, Debug)]
 struct StartEntry {
     description: String,
@@ -44,7 +62,7 @@ struct StartEntry {
     pid: i64,
 }
 
-fn convert(p: &[Rc<Project>], w: &[Rc<Workspace>], tjson: TimeEntryJSON) -> TimeEntry {
+fn convert(p: &[Rc<Project>], w: &[Rc<Workspace>], tjson: &TimeEntryJSON) -> TimeEntry {
     let workspace = w.iter().find(|ws| ws.id == tjson.wid).expect("Workspaces was not filled correctly").clone();
     let project = p.iter().find(|p| p.id == tjson.pid).expect("Projects was not filled correctly").clone();
     TimeEntry {
@@ -69,7 +87,7 @@ trait TimeEntryTrait {
     fn stop_entry(&self, t: &TimeEntry) -> Result<(), TogglError>;
     fn get_entry_details(&self, id: i64) -> Result<TimeEntry, TogglError>;
     fn get_running_entry(&self) -> Result<TimeEntry, TogglError>;
-    fn update_entry(&self, t: &TimeEntry) -> Result<(), TogglError>;
+    fn update_entry(&self, t: TimeEntry) -> Result<(), TogglError>;
     fn delete_entry(&self, t: &TimeEntry) -> Result<(), TogglError>;
     fn convert_response(&self, t: &[TimeEntryJSON]) -> Vec<TimeEntry>;
 }
@@ -114,7 +132,7 @@ impl TimeEntryTrait for Toggl {
     }
 
     fn stop_entry(&self, t: &TimeEntry) -> Result<(), TogglError> {
-        self.put(&format!("https://www.toggl.com/api/v8/time_entries/{}/stop", t.id))?;
+        self.put::<i64>(&format!("https://www.toggl.com/api/v8/time_entries/{}/stop", t.id), &None)?;
         Ok(())
     }
 
@@ -130,18 +148,19 @@ impl TimeEntryTrait for Toggl {
             .map(|v| v[0])
     }
 
-    fn update_entry(&self, t: &TimeEntry) -> Result<(), TogglError> {
-        self.put(&format!("https://www.toggl.com/api/v8/time_entries/{}", t.id), t)
+    fn update_entry(&self, t: TimeEntry) -> Result<(), TogglError> {
+        let entry: TimeEntryJSON = t.into();
+        self.put(&format!("https://www.toggl.com/api/v8/time_entries/{}", t.id), &Some(entry))
     }
 
     fn delete_entry(&self, t: &TimeEntry) -> Result<(), TogglError> {
-        self.delete(&format!("https://www.toggl.com/api/v8/time_entries/{}", t.id)
+        self.delete(&format!("https://www.toggl.com/api/v8/time_entries/{}", t.id))
     }
 
     fn convert_response(&self, res: &[TimeEntryJSON]) -> Vec<TimeEntry> {
         res
         .into_iter()
-        .map(|tjson| convert(self.projects, &self.user.workspaces, tjson))
+        .map(|tjson| convert(&self.projects.unwrap_or([].to_vec()), &self.user.workspaces, tjson))
         .collect()
     }
 }

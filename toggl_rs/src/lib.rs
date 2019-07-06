@@ -24,7 +24,7 @@ pub struct Toggl {
 trait Query {
     fn get<T: serde::de::DeserializeOwned>(&self, url: &str) -> Result<T, crate::error::TogglError>;
     fn post<T: serde::ser::Serialize>(&self, url: &str, t: &T) -> Result<(), crate::error::TogglError>;
-    fn put<T: serde::ser::Serialize>(&self, url: &str) -> Result<(), crate::error::TogglError>;
+    fn put<T: serde::ser::Serialize>(&self, url: &str, t: &Option<T>) -> Result<(), crate::error::TogglError>;
     fn delete(&self, url: &str) -> Result<(), crate::error::TogglError>;
 }
 
@@ -49,12 +49,21 @@ impl Query for Toggl {
         Ok(())
     }
 
-    fn put<T: serde::ser::Serialize>(&self, url: &str) -> Result<(), crate::error::TogglError> {
-        self
-            .client
-            .put(url)
-            .basic_auth(&self.api_token, Some("api_token"))
-            .send()?;
+    fn put<T: serde::ser::Serialize>(&self, url: &str, t: &Option<T>) -> Result<(), crate::error::TogglError> {
+        if let Some(l) = t {
+            self
+                .client
+                .put(url)
+                .json(t)
+                .basic_auth(&self.api_token, Some("api_token"))
+                .send()?;
+        } else {
+            self
+                .client
+                .put(url)
+                .basic_auth(&self.api_token, Some("api_token"))
+                .send()?;
+        }
         Ok(())
     }
 
