@@ -9,6 +9,7 @@ use std::rc::Rc;
 mod auth;
 mod error;
 pub mod project;
+mod return_types;
 pub mod time_entry;
 mod user;
 mod workspace;
@@ -28,11 +29,11 @@ pub struct Toggl {
 trait Query {
     fn get<T: serde::de::DeserializeOwned>(&self, url: &str)
         -> Result<T, crate::error::TogglError>;
-    fn post<T: serde::ser::Serialize>(
+    fn post<T: serde::ser::Serialize, S: serde::de::DeserializeOwned>(
         &self,
         url: &str,
         t: &T,
-    ) -> Result<(), crate::error::TogglError>;
+    ) -> Result<S, crate::error::TogglError>;
     fn put<T: serde::ser::Serialize>(
         &self,
         url: &str,
@@ -54,19 +55,18 @@ impl Query for Toggl {
         Ok(resp.json()?)
     }
 
-    fn post<T: serde::ser::Serialize>(
+    fn post<T: serde::ser::Serialize, S: serde::de::DeserializeOwned>(
         &self,
         url: &str,
         t: &T,
-    ) -> Result<(), crate::error::TogglError> {
+    ) -> Result<S, crate::error::TogglError> {
 
-        panic!("I need to parse the response to json to test if there was an");
         self.client
             .post(url)
             .json(t)
             .basic_auth(&self.api_token, Some("api_token"))
             .send()
-            .map(|_v| ())
+            .and_then(|mut v| v.json::<S>())
             .map_err(|v| v.into())
     }
 
@@ -75,29 +75,31 @@ impl Query for Toggl {
         url: &str,
         t: &Option<T>,
     ) -> Result<(), crate::error::TogglError> {
-
-        panic!("I need to parse the response to json to test if there was an");
+        panic!("Fix error handling");
         if let Some(l) = t {
             self.client
                 .put(url)
                 .json(l)
                 .basic_auth(&self.api_token, Some("api_token"))
-                .send()?;
+                .send()
+                .and_then(|mut v| v.json())?;
         } else {
             self.client
                 .put(url)
                 .basic_auth(&self.api_token, Some("api_token"))
-                .send()?;
+                .send()
+                .and_then(|mut v| v.json())?;
         }
         Ok(())
     }
 
     fn delete(&self, url: &str) -> Result<(), crate::error::TogglError> {
-        panic!("I need to parse the response to json to test if there was an");
+        panic!("Fix error handling");
         self.client
             .delete(url)
             .basic_auth(&self.api_token, Some("api_token"))
-            .send()?;
+            .send()
+            .and_then(|mut v| v.json())?;
         Ok(())
     }
 
