@@ -1,4 +1,4 @@
-use ansi_term;
+use ansi_term::Color::{Red, Green};
 use clap::{App, Arg, ArgMatches};
 use toggl_rs::project::ProjectTrait;
 use toggl_rs::time_entry::TimeEntryExt;
@@ -10,6 +10,16 @@ fn print_projects(ids: &[String]) {
         print!("{}: {}, ", i, name);
     }
     println!();
+}
+
+fn print_current(t: &Toggl) {
+    print!("Current: ");
+    let res = t.get_running_entry().expect("API Problem");
+    if let Some(current) = res {
+        println!("{} : {}@{}", Green.paint("Running"), current.description, current.project.name);
+    } else {
+        println!("{}", Red.paint("Not Running"));
+    }
 }
 
 fn run_matches(matches: ArgMatches, toggl: &Toggl, projects: &toggl_rs::project::Projects) {
@@ -24,7 +34,9 @@ fn run_matches(matches: ArgMatches, toggl: &Toggl, projects: &toggl_rs::project:
             println!("Project not found");
         }
     } else if matches.is_present("stop") {
-        if let Ok(current_entry) = toggl.get_running_entry() {
+        println!("Getting running");
+        let res = toggl.get_running_entry().expect("API Error");
+        if let Some(current_entry) = res {
             println!("{:?}", current_entry);
             toggl.stop_entry(&current_entry).expect("Error");
         } else {
@@ -62,6 +74,7 @@ fn main() {
         .get_matches();
 
     print_projects(&project_ids);
+    print_current(&toggl);
 
 
     run_matches(matches, &toggl, projects);
