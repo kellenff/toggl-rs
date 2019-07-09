@@ -34,11 +34,11 @@ trait Query {
         url: &str,
         t: &T,
     ) -> Result<S, crate::error::TogglError>;
-    fn put<T: serde::ser::Serialize>(
+    fn put<T: serde::ser::Serialize, S: serde::de::DeserializeOwned>(
         &self,
         url: &str,
         t: &Option<T>,
-    ) -> Result<(), crate::error::TogglError>;
+    ) -> Result<S, crate::error::TogglError>;
     fn delete(&self, url: &str) -> Result<(), crate::error::TogglError>;
 }
 
@@ -70,27 +70,27 @@ impl Query for Toggl {
             .map_err(|v| v.into())
     }
 
-    fn put<T: serde::ser::Serialize>(
+    fn put<T: serde::ser::Serialize, S: serde::de::DeserializeOwned>(
         &self,
         url: &str,
         t: &Option<T>,
-    ) -> Result<(), crate::error::TogglError> {
-        panic!("Fix error handling");
+    ) -> Result<S, crate::error::TogglError> {
         if let Some(l) = t {
             self.client
                 .put(url)
                 .json(l)
                 .basic_auth(&self.api_token, Some("api_token"))
                 .send()
-                .and_then(|mut v| v.json())?;
+                .and_then(|mut v| v.json())
+                .map_err(|e| e.into())
         } else {
             self.client
                 .put(url)
                 .basic_auth(&self.api_token, Some("api_token"))
                 .send()
-                .and_then(|mut v| v.json())?;
+                .and_then(|mut v| v.json())
+                .map_err(|e| e.into())
         }
-        Ok(())
     }
 
     fn delete(&self, url: &str) -> Result<(), crate::error::TogglError> {

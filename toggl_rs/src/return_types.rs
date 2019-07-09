@@ -12,8 +12,12 @@ pub struct StartEntryReturnInner {
     wid: i64,
     billable: bool,
     start: chrono::DateTime<chrono::Utc>,
+    tags: Option<Vec<String>>,
     duration: i64,
     description: String,
 }
 
 pub type StartEntryReturn = Return<StartEntryReturnInner>;
+
+//yes they seem to be the same
+pub type StopEntryReturn = Return<StartEntryReturnInner>;

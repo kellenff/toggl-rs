@@ -3,7 +3,7 @@ use std::rc::Rc;
 use crate::error::TogglError;
 
 use crate::project::{Project, ProjectTrait};
-use crate::return_types::StartEntryReturn;
+use crate::return_types::{StartEntryReturn, StopEntryReturn};
 use crate::workspace::Workspace;
 use crate::Query;
 use crate::Toggl;
@@ -173,8 +173,9 @@ impl TimeEntryExt for Toggl {
         Ok(())
     }
 
+    /// Stops the given entry
     fn stop_entry(&self, t: &TimeEntry) -> Result<(), TogglError> {
-        self.put::<i64>(
+        self.put::<i64, StopEntryReturn>(
             &format!("https://www.toggl.com/api/v8/time_entries/{}/stop", t.id),
             &None,
         )?;
@@ -188,6 +189,7 @@ impl TimeEntryExt for Toggl {
     }
 
     fn get_running_entry(&self) -> Result<TimeEntry, TogglError> {
+        panic!("this currently does not work");
         self.get("https://www.toggl.com/api/v8/time_entries/current")
             .map(|r| self.convert_response(&[r]))
             .map(|mut v| v.swap_remove(0)) //this makes the borrowchecker work
