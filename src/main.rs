@@ -9,7 +9,7 @@ fn print_projects(ids: &[String]) {
     for (i, name) in ids.iter().enumerate() {
         print!("{}: {}, ", i, name);
     }
-    print!("\n");
+    println!();
 }
 
 fn run_matches(matches: ArgMatches, toggl: &Toggl, projects: &toggl_rs::project::Projects) {

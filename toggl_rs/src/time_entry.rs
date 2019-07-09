@@ -1,10 +1,10 @@
 use std::rc::Rc;
 
 use crate::error::TogglError;
-use crate::workspace::Workspace;
+
 use crate::project::{Project, ProjectTrait};
 use crate::return_types::StartEntryReturn;
-
+use crate::workspace::Workspace;
 use crate::Query;
 use crate::Toggl;
 #[derive(Debug)]
@@ -150,6 +150,8 @@ impl TimeEntryExt for Toggl {
         Ok(self.convert_response(&res))
     }
 
+    /// This starts the entry with the `description` and the tags given by `tags` in the project `project`. It automatically parses the return values to see if we have a valid return and the operation was successful.
+    /// This automatically stops the current running entry (serverside).
     fn start_entry(
         &self,
         description: &str,
@@ -164,7 +166,10 @@ impl TimeEntryExt for Toggl {
                 created_with: "toggl-rs".to_string(),
             },
         };
-        self.post::<StartEntry, StartEntryReturn>("https://www.toggl.com/api/v8/time_entries/start", &t)?;
+        self.post::<StartEntry, StartEntryReturn>(
+            "https://www.toggl.com/api/v8/time_entries/start",
+            &t,
+        )?;
         Ok(())
     }
 

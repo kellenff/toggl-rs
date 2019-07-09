@@ -1,10 +1,12 @@
+/// The base type for all returned data
 #[derive(Deserialize, Debug)]
-pub struct StartEntryReturn {
-    data: StartEntryReturnInner,
+pub struct Return<T> {
+    data: T,
 }
 
+/// The Inner Type for the return from StartEntryCall
 #[derive(Deserialize, Debug)]
-struct StartEntryReturnInner {
+pub struct StartEntryReturnInner {
     id: i64,
     pid: i64,
     wid: i64,
@@ -13,3 +15,5 @@ struct StartEntryReturnInner {
     duration: i64,
     description: String,
 }
+
+pub type StartEntryReturn = Return<StartEntryReturnInner>;
