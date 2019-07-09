@@ -98,3 +98,4 @@ pub type StartEntryReturn = Return<StartEntryReturnInner>;
 //yes they seem to be the same
 pub type StopEntryReturn = Return<StartEntryReturnInner>;
 pub type TimeEntryReturn = Return<Option<TimeEntryInner>>;
+pub type TimeEntryRangeReturn = Vec<TimeEntryInner>;

@@ -5,6 +5,7 @@ extern crate serde_derive;
 extern crate uuid;
 
 use std::rc::Rc;
+use reqwest::IntoUrl;
 
 mod auth;
 mod error;
@@ -27,25 +28,25 @@ pub struct Toggl {
 }
 
 trait Query {
-    fn get<T: serde::de::DeserializeOwned>(&self, url: &str)
+    fn get<U: IntoUrl, T: serde::de::DeserializeOwned>(&self, url: U)
         -> Result<T, crate::error::TogglError>;
-    fn post<T: serde::ser::Serialize, S: serde::de::DeserializeOwned>(
+    fn post<U: IntoUrl, T: serde::ser::Serialize, S: serde::de::DeserializeOwned>(
         &self,
-        url: &str,
+        url: U,
         t: &T,
     ) -> Result<S, crate::error::TogglError>;
-    fn put<T: serde::ser::Serialize, S: serde::de::DeserializeOwned>(
+    fn put<U: IntoUrl, T: serde::ser::Serialize, S: serde::de::DeserializeOwned>(
         &self,
-        url: &str,
+        url: U,
         t: &Option<T>,
     ) -> Result<S, crate::error::TogglError>;
-    fn delete(&self, url: &str) -> Result<(), crate::error::TogglError>;
+    fn delete<U: IntoUrl>(&self, url: U) -> Result<(), crate::error::TogglError>;
 }
 
 impl Query for Toggl {
-    fn get<T: serde::de::DeserializeOwned>(
+    fn get<U: IntoUrl, T: serde::de::DeserializeOwned>(
         &self,
-        url: &str,
+        url: U,
     ) -> Result<T, crate::error::TogglError> {
         let mut resp = self
             .client
@@ -55,9 +56,9 @@ impl Query for Toggl {
         Ok(resp.json()?)
     }
 
-    fn post<T: serde::ser::Serialize, S: serde::de::DeserializeOwned>(
+    fn post<U: IntoUrl, T: serde::ser::Serialize, S: serde::de::DeserializeOwned>(
         &self,
-        url: &str,
+        url: U,
         t: &T,
     ) -> Result<S, crate::error::TogglError> {
 
@@ -70,9 +71,9 @@ impl Query for Toggl {
             .map_err(|v| v.into())
     }
 
-    fn put<T: serde::ser::Serialize, S: serde::de::DeserializeOwned>(
+    fn put<U: IntoUrl, T: serde::ser::Serialize, S: serde::de::DeserializeOwned>(
         &self,
-        url: &str,
+        url: U,
         t: &Option<T>,
     ) -> Result<S, crate::error::TogglError> {
         if let Some(l) = t {
@@ -93,7 +94,7 @@ impl Query for Toggl {
         }
     }
 
-    fn delete(&self, url: &str) -> Result<(), crate::error::TogglError> {
+    fn delete<U: IntoUrl>(&self, url: U) -> Result<(), crate::error::TogglError> {
         panic!("Fix error handling");
         self.client
             .delete(url)

@@ -2,4 +2,5 @@
 pub enum TogglError {
     AuthError(String),
     ReqwestError(reqwest::Error),
+    NotImplemented,
 }

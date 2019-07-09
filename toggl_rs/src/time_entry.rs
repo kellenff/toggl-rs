@@ -1,10 +1,7 @@
-use std::rc::Rc;
-
 use crate::error::TogglError;
 
-use crate::project::{Project, ProjectTrait};
-use crate::return_types::{convert, StartEntryReturn, StopEntryReturn, TimeEntry, TimeEntryReturn};
-use crate::workspace::Workspace;
+use crate::project::Project;
+use crate::return_types::{convert, StartEntryReturn, StopEntryReturn, TimeEntry, TimeEntryRangeReturn, TimeEntryReturn};
 use crate::Query;
 use crate::Toggl;
 
@@ -23,9 +20,9 @@ struct StartTimeEntry {
 }
 
 pub trait TimeEntryExt {
-    fn get_time_entries(&mut self) -> Result<Vec<TimeEntry>, TogglError>;
+    fn get_time_entries(&self) -> Result<Vec<TimeEntry>, TogglError>;
     fn get_time_entries_range(
-        &mut self,
+        &self,
         start: Option<chrono::DateTime<chrono::Utc>>,
         end: Option<chrono::DateTime<chrono::Utc>>,
     ) -> Result<Vec<TimeEntry>, TogglError>;
@@ -44,37 +41,34 @@ pub trait TimeEntryExt {
 
 trait TimeEntryTrait {
     /// Converts an array of TimeEntryReturn to Vector of TimeEntry discarding any elements where the data of Return<TimeEntryInner> is None
-    fn convert_response(&self, t: &[TimeEntryReturn]) -> Vec<TimeEntry>;
+    fn convert_response(&self, t: &TimeEntryRangeReturn) -> Vec<TimeEntry>;
+
+    fn convert_single(&self, res: &TimeEntryReturn) -> Option<TimeEntry>;
 }
 
 impl TimeEntryExt for Toggl {
-    fn get_time_entries(&mut self) -> Result<Vec<TimeEntry>, TogglError> {
+    fn get_time_entries(&self) -> Result<Vec<TimeEntry>, TogglError> {
         self.get_time_entries_range(None, None)
     }
 
     fn get_time_entries_range(
-        &mut self,
+        &self,
         start: Option<chrono::DateTime<chrono::Utc>>,
         end: Option<chrono::DateTime<chrono::Utc>>,
     ) -> Result<Vec<TimeEntry>, TogglError> {
-        let url = if let Some(s) = start {
-            if let Some(e) = end {
-                format!(
-                    "https://www.toggl.com/api/v8/time_entries?start_date={}&end_date={}",
-                    s, e
-                )
-            } else {
-                format!("https://www.toggl.com/api/v8/time_entries?start_date={}", s)
-            }
-        } else if let Some(e) = end {
-            format!("https://www.toggl.com/api/v8/time_entries?end_date={}", e)
-        } else {
-            "https://www.toggl.com/api/v8/time_entries".to_string()
-        };
-        if self.projects.is_none() {
-            self.fill_projects();
+        let mut entries = Vec::new();
+        if let Some(s) = start {
+            entries.push(("start_date", s.to_rfc3339()));
         }
-        let res: Vec<TimeEntryReturn> = self.get(&url)?;
+        if let Some(e) = end {
+            entries.push(("end_date", e.to_rfc3339()));
+        }
+
+        let url =
+            reqwest::Url::parse_with_params("https://www.toggl.com/api/v8/time_entries", entries)
+                .expect("Error in parsing URL");
+
+        let res: TimeEntryRangeReturn = self.get(url)?;
         Ok(self.convert_response(&res))
     }
 
@@ -94,7 +88,7 @@ impl TimeEntryExt for Toggl {
                 created_with: "toggl-rs".to_string(),
             },
         };
-        self.post::<StartEntry, StartEntryReturn>(
+        self.post::<&str, StartEntry, StartEntryReturn>(
             "https://www.toggl.com/api/v8/time_entries/start",
             &t,
         )?;
@@ -103,7 +97,7 @@ impl TimeEntryExt for Toggl {
 
     /// Stops the given entry
     fn stop_entry(&self, t: &TimeEntry) -> Result<(), TogglError> {
-        self.put::<i64, StopEntryReturn>(
+        self.put::<&str, i64, StopEntryReturn>(
             &format!("https://www.toggl.com/api/v8/time_entries/{}/stop", t.id),
             &None,
         )?;
@@ -111,21 +105,17 @@ impl TimeEntryExt for Toggl {
     }
 
     fn get_entry_details(&self, id: i64) -> Result<TimeEntry, TogglError> {
-        self.get(&format!("https://www.toggl.com/api/v8/time_entries/{}", id))
-            .map(|r| self.convert_response(&[r]))
-            .map(|mut v| v.swap_remove(0)) //this makes the borrowchecker work
+        panic!("Not yet implemented");
+        Err(TogglError::NotImplemented)
+        //self.get(&format!("https://www.toggl.com/api/v8/time_entries/{}", id))
+        //    .map(|r| self.convert_single(&r))
     }
 
     /// Returns the current running entry or None
     /// Throws an error if there was a problem with the api
     fn get_running_entry(&self) -> Result<Option<TimeEntry>, TogglError> {
-        let res: Result<TimeEntryReturn, crate::error::TogglError> =
-            self.get("https://www.toggl.com/api/v8/time_entries/current");
-        //panic!("{:?}", res);
-
         self.get("https://www.toggl.com/api/v8/time_entries/current")
-            .map(|r| self.convert_response(&[r]))
-            .map(|mut v| v.pop())
+            .map(|r| self.convert_single(&r))
     }
 
     fn update_entry(&self, t: TimeEntry) -> Result<(), TogglError> {
@@ -147,19 +137,24 @@ impl TimeEntryExt for Toggl {
 }
 
 impl TimeEntryTrait for Toggl {
-    fn convert_response(&self, res: &[TimeEntryReturn]) -> Vec<TimeEntry> {
+    fn convert_response(&self, res: &TimeEntryRangeReturn) -> Vec<TimeEntry> {
         res.iter()
-            .filter_map(|tjson| {
-                if let Some(ref t) = tjson.data {
-                    Some(convert(
+            .map(|tjson| {
+                convert(
                         self.projects.as_ref().unwrap_or(&[].to_vec()),
                         &self.user.workspaces,
-                        t,
-                    ))
-                } else {
-                    None
-                }
-            })
+                        &tjson,
+                    )})
             .collect()
+    }
+
+    fn convert_single(&self, res: &TimeEntryReturn) -> Option<TimeEntry> {
+        if let Some(ref t) = res.data {
+            Some(convert(self.projects.as_ref().unwrap_or(&[].to_vec()),
+                &self.user.workspaces,
+                t))
+        } else {
+            None
+        }
     }
 }
