@@ -12,5 +12,4 @@ struct StartEntryReturnInner {
     start: chrono::DateTime<chrono::Utc>,
     duration: i64,
     description: String,
-    tags: Vec<String>,
 }
