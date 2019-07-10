@@ -97,10 +97,8 @@ impl TimeEntryExt for Toggl {
 
     /// Stops the given entry
     fn stop_entry(&self, t: &TimeEntry) -> Result<(), TogglError> {
-        self.put::<&str, i64, StopEntryReturn>(
-            &format!("https://www.toggl.com/api/v8/time_entries/{}/stop", t.id),
-            &None,
-        )?;
+        self.get::<&str, StopEntryReturn>(
+            &format!("https://www.toggl.com/api/v8/time_entries/{}/stop", t.id))?;
         Ok(())
     }
 

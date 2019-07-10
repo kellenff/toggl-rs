@@ -95,7 +95,6 @@ fn run_matches(matches: ArgMatches, toggl: &Toggl, projects: &toggl_rs::project:
         println!("Getting running");
         let res = toggl.get_running_entry().expect("API Error");
         if let Some(current_entry) = res {
-            println!("{:?}", current_entry);
             toggl.stop_entry(&current_entry).expect("Error");
         } else {
             println!("No task currently running");
