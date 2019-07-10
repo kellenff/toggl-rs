@@ -73,7 +73,7 @@ fn print_todays_tasks(t: &Toggl) {
         .collect::<Vec<(String, i64)>>();
 
     for (name,seconds) in project_nums {
-        print!("| {} | {} ({:.2}%) ", name, format_duration(&chrono::Duration::seconds(seconds))
+        print!("| {}:{} ({:.2}%) ", name, format_duration(&chrono::Duration::seconds(seconds))
             , seconds as f64/sum.num_seconds() as f64);
     }
 
