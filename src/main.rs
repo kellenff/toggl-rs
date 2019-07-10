@@ -41,18 +41,41 @@ fn print_current(t: &Toggl) {
 
 fn print_todays_tasks(t: &Toggl) {
     let start_date = chrono::Utc::today().and_hms(0,0,0);
-    println!("------------------------------------");
+    println!("+-------------------------------------------------------------------------------+");
     let mut entries = t.get_time_entries_range(Some(start_date), Some(chrono::Utc::now())).expect("API Error");
     entries.truncate(entries.len()-1); //the last one is the currently running one which we handle separately
-    for i in entries {
+    for i in &entries {
         let start_format = i.start.with_timezone(&chrono::Local).format("%H:%M");
         let stop_format = i.stop.unwrap().with_timezone(&chrono::Local).format("%H:%M");
         let duration = i.stop.unwrap() - i.start;
         let dur_format = format_duration(&duration);
 
-        println!("|{}|{}|{}|{}|{}|", start_format, stop_format, i.description, i.project.name, dur_format);
+        println!("| {} | {} | {:<30} | {:^15} | {:>10} |", start_format, stop_format, i.description, i.project.name, dur_format);
     }
-    println!("------------------------------------");
+    println!("+-------------------------------------------------------------------------------+");
+
+    //print stats
+    let sum = chrono::Duration::seconds(
+        entries.iter()
+        .map(|t| t.stop.unwrap() - t.start)
+        .map(|t| t.num_seconds())
+        .sum::<i64>());
+    let project_nums = t.projects.as_ref().unwrap_or(&Vec::new()).
+        iter()
+        .map(|project| (project.name.clone(),
+            entries.iter()
+            .filter(|task| task.project == *project)
+            .map(|task| task.stop.unwrap() - task.start)
+            .map(|task| task.num_seconds())
+            .sum::<i64>()))
+        .collect::<Vec<(String, i64)>>();
+
+    for (name,seconds) in project_nums {
+        print!("| {} | {} ({:.2}%) ", name, format_duration(&chrono::Duration::seconds(seconds))
+            , seconds as f64/sum.num_seconds() as f64);
+    }
+
+    println!("| Total: {}", format_duration(&sum));
 }
 
 fn run_matches(matches: ArgMatches, toggl: &Toggl, projects: &toggl_rs::project::Projects) {
@@ -109,7 +132,6 @@ fn main() {
     print_projects(&project_ids);
     print_current(&toggl);
     print_todays_tasks(&toggl);
-
 
     run_matches(matches, &toggl, projects);
 }

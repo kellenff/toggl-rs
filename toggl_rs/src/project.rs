@@ -5,7 +5,7 @@ use crate::Query;
 
 pub type Projects = Vec<Rc<Project>>;
 
-#[derive(Deserialize, Debug, Serialize)]
+#[derive(Deserialize, Debug, Eq, PartialEq, Serialize)]
 pub struct Project {
     pub id: i64,
     pub name: String,
