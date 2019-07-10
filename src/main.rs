@@ -33,7 +33,9 @@ fn print_current(t: &Toggl) {
     print!("Current: ");
     let res = t.get_running_entry().expect("API Problem");
     if let Some(current) = res {
-        println!("{} : {}@{}", Green.paint("Running"), current.description, current.project.name);
+        let running_for = chrono::Utc::now() - current.start;
+        println!("{}: {}@{}, {} Running for: {}",
+            Green.paint("Running"), current.description, current.project.name, current.start.with_timezone(&chrono::Local).format("%H:%M"), format_duration(&running_for));
     } else {
         println!("{}", Red.paint("Not Running"));
     }
