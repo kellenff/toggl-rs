@@ -42,7 +42,8 @@ fn print_current(t: &Toggl) {
 fn print_todays_tasks(t: &Toggl) {
     let start_date = chrono::Utc::today().and_hms(0,0,0);
     println!("------------------------------------");
-    let entries = t.get_time_entries_range(Some(start_date), None).expect("API Error");
+    let mut entries = t.get_time_entries_range(Some(start_date), Some(chrono::Utc::now())).expect("API Error");
+    entries.truncate(entries.len()-1); //the last one is the currently running one which we handle separately
     for i in entries {
         let start_format = i.start.with_timezone(&chrono::Local).format("%H:%M");
         let stop_format = i.stop.unwrap().with_timezone(&chrono::Local).format("%H:%M");
