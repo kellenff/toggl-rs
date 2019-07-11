@@ -1,6 +1,6 @@
-use ansi_term::Color::{Red, Green};
-use clap::{App, Arg, ArgMatches};
+use ansi_term::Color::{Green, Red};
 use chrono;
+use clap::{App, Arg, ArgMatches};
 use toggl_rs::project::ProjectTrait;
 use toggl_rs::time_entry::TimeEntryExt;
 use toggl_rs::{init, Toggl};
@@ -34,50 +34,85 @@ fn print_current(t: &Toggl) {
     let res = t.get_running_entry().expect("API Problem");
     if let Some(current) = res {
         let running_for = chrono::Utc::now() - current.start;
-        println!("{}: {}@{}, {} Running for: {}",
-            Green.paint("Running"), current.description, current.project.name, current.start.with_timezone(&chrono::Local).format("%H:%M"), format_duration(&running_for));
+        println!(
+            "{}: {}@{}, {} Running for: {}",
+            Green.paint("Running"),
+            current.description,
+            current.project.name,
+            current.start.with_timezone(&chrono::Local).format("%H:%M"),
+            format_duration(&running_for)
+        );
     } else {
         println!("{}", Red.paint("Not Running"));
     }
 }
 
 fn print_todays_tasks(t: &Toggl) {
-    let start_date = chrono::Utc::today().and_hms(0,0,0);
+    let start_date = chrono::Utc::today().and_hms(0, 0, 0);
     println!("+-------------------------------------------------------------------------------+");
-    let mut entries = t.get_time_entries_range(Some(start_date), Some(chrono::Utc::now())).expect("API Error");
-    entries.truncate(entries.len()-1); //the last one is the currently running one which we handle separately
-    for i in &entries {
-        let start_format = i.start.with_timezone(&chrono::Local).format("%H:%M");
-        let stop_format = i.stop.unwrap().with_timezone(&chrono::Local).format("%H:%M");
-        let duration = i.stop.unwrap() - i.start;
-        let dur_format = format_duration(&duration);
+    let mut entries = t
+        .get_time_entries_range(Some(start_date), Some(chrono::Utc::now()))
+        .expect("API Error");
+    if entries.len() >= 1 {
+        entries.truncate(entries.len() - 1); //the last one is the currently running one which we handle separately
+        for (idx, i) in entries.iter().enumerate() {
+            let start_format = i.start.with_timezone(&chrono::Local).format("%H:%M");
+            let stop_format = i
+                .stop
+                .unwrap()
+                .with_timezone(&chrono::Local)
+                .format("%H:%M");
+            let duration = i.stop.unwrap() - i.start;
+            let dur_format = format_duration(&duration);
 
-        println!("| {} | {} | {:<30} | {:^15} | {:>10} |", start_format, stop_format, i.description, i.project.name, dur_format);
+            println!(
+                "|{} | {} | {} | {:<30} | {:^15} | {:>10} |",
+                idx, start_format, stop_format, i.description, i.project.name, dur_format
+            );
+        }
     }
     println!("+-------------------------------------------------------------------------------+");
 
     //print stats
     let sum = chrono::Duration::seconds(
-        entries.iter()
-        .map(|t| t.stop.unwrap() - t.start)
-        .map(|t| t.num_seconds())
-        .sum::<i64>());
-    let project_nums = t.projects.as_ref().unwrap_or(&Vec::new()).
-        iter()
-        .map(|project| (project.name.clone(),
-            entries.iter()
-            .filter(|task| task.project == *project)
-            .map(|task| task.stop.unwrap() - task.start)
-            .map(|task| task.num_seconds())
-            .sum::<i64>()))
+        entries
+            .iter()
+            .map(|t| t.stop.unwrap() - t.start)
+            .map(|t| t.num_seconds())
+            .sum::<i64>(),
+    );
+    let project_nums = t
+        .projects
+        .as_ref()
+        .unwrap_or(&Vec::new())
+        .iter()
+        .map(|project| {
+            (
+                project.name.clone(),
+                entries
+                    .iter()
+                    .filter(|task| task.project == *project)
+                    .map(|task| task.stop.unwrap() - task.start)
+                    .map(|task| task.num_seconds())
+                    .sum::<i64>(),
+            )
+        })
         .collect::<Vec<(String, i64)>>();
 
-    for (name,seconds) in project_nums {
-        print!("| {}:{} ({:.2}%) ", name, format_duration(&chrono::Duration::seconds(seconds))
-            , seconds as f64/sum.num_seconds() as f64);
+    for (name, seconds) in project_nums {
+        print!(
+            "| {}:{} ({:.2}%) ",
+            name,
+            format_duration(&chrono::Duration::seconds(seconds)),
+            seconds as f64 / sum.num_seconds() as f64
+        );
     }
 
-    println!("| Total: {}", format_duration(&sum));
+    println!(
+        "| Total: {} | Ctx: {}",
+        format_duration(&sum),
+        std::cmp::max(entries.len() as i64 - 1, 0)
+    );
 }
 
 fn run_matches(matches: ArgMatches, toggl: &Toggl, projects: &toggl_rs::project::Projects) {
