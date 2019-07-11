@@ -15,6 +15,9 @@ pub mod time_entry;
 mod user;
 mod workspace;
 
+pub use crate::return_types::TimeEntry;
+pub use crate::time_entry::TimeEntryExt;
+
 pub fn init(api_token: &str) -> Result<Toggl, crate::error::TogglError> {
     auth::init(api_token)
 }

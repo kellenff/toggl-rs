@@ -1,14 +1,15 @@
-
 use crate::project::Project;
 use crate::workspace::Workspace;
 use std::rc::Rc;
+use std::cmp::Ordering;
+
 /// The base type for all returned data
 #[derive(Deserialize, Debug)]
 pub struct Return<T> {
     pub data: T,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq)]
 pub struct TimeEntry {
     pub id: i64,
     pub guid: uuid::Uuid,
@@ -20,6 +21,24 @@ pub struct TimeEntry {
     pub description: String,
     pub duronly: bool,
     pub at: chrono::DateTime<chrono::Utc>,
+}
+
+impl PartialEq for TimeEntry {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
+impl PartialOrd for TimeEntry {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.start.cmp(&other.start))
+    }
+}
+
+impl Ord for TimeEntry {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.start.cmp(&other.start)
+    }
 }
 
 impl From<TimeEntry> for TimeEntryReturn {
