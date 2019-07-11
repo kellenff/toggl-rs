@@ -49,29 +49,28 @@ fn print_current(t: &Toggl) {
 
 fn print_todays_tasks(t: &Toggl) {
     let start_date = chrono::Utc::today().and_hms(0, 0, 0);
-    println!("+-------------------------------------------------------------------------------+");
+    println!("+----------------------------------------------------------------------------------+");
     let mut entries = t
-        .get_time_entries_range(Some(start_date), Some(chrono::Utc::now()))
+        .get_time_entries_range(Some(start_date), None)
         .expect("API Error");
-    if entries.len() >= 1 {
+    if t.get_running_entry().unwrap_or(None).is_some() {
         entries.truncate(entries.len() - 1); //the last one is the currently running one which we handle separately
-        for (idx, i) in entries.iter().enumerate() {
-            let start_format = i.start.with_timezone(&chrono::Local).format("%H:%M");
-            let stop_format = i
-                .stop
-                .unwrap()
-                .with_timezone(&chrono::Local)
-                .format("%H:%M");
-            let duration = i.stop.unwrap() - i.start;
-            let dur_format = format_duration(&duration);
-
-            println!(
-                "|{} | {} | {} | {:<30} | {:^15} | {:>10} |",
-                idx, start_format, stop_format, i.description, i.project.name, dur_format
-            );
-        }
     }
-    println!("+-------------------------------------------------------------------------------+");
+    for (idx, i) in entries.iter().enumerate() {
+        let start_format = i.start.with_timezone(&chrono::Local).format("%H:%M");
+        let stop_format = i
+            .stop
+            .unwrap()
+            .with_timezone(&chrono::Local)
+            .format("%H:%M");
+        let duration = i.stop.unwrap() - i.start;
+        let dur_format = format_duration(&duration);
+        println!(
+            "|{} | {} | {} | {:<30} | {:^15} | {:>10} |",
+            idx, start_format, stop_format, i.description, i.project.name, dur_format
+        );
+    }
+    println!("+----------------------------------------------------------------------------------+");
 
     //print stats
     let sum = chrono::Duration::seconds(
@@ -127,7 +126,6 @@ fn run_matches(matches: ArgMatches, toggl: &Toggl, projects: &toggl_rs::project:
             println!("Project not found");
         }
     } else if matches.is_present("stop") {
-        println!("Getting running");
         let res = toggl.get_running_entry().expect("API Error");
         if let Some(current_entry) = res {
             toggl.stop_entry(&current_entry).expect("Error");
@@ -159,7 +157,7 @@ fn main() {
         )
         .arg(
             Arg::with_name("stop")
-                .short("t")
+                .short("p")
                 .long("stop")
                 .help("Stops the current task"),
         )
