@@ -124,7 +124,7 @@ fn run_matches(matches: ArgMatches, t: &Toggl, projects: &toggl_rs::project::Pro
         let project_idx = v.next().and_then(|s| s.parse::<usize>().ok()).unwrap_or(0);
         let project = projects.get(project_idx);
         if let Some(p) = project {
-            t.start_entry("test", &[], &p).expect("Error");
+            t.start_entry(&title, &[], &p).expect("Error");
             println!("Started Task: {} for Project {}", title, (*p).name);
         } else {
             println!("Project not found");
