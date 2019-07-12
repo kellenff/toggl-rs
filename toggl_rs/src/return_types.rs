@@ -1,7 +1,7 @@
 use crate::project::Project;
 use crate::workspace::Workspace;
-use std::rc::Rc;
 use std::cmp::Ordering;
+use std::rc::Rc;
 
 /// The base type for all returned data
 #[derive(Deserialize, Debug)]
@@ -118,3 +118,4 @@ pub type StartEntryReturn = Return<StartEntryReturnInner>;
 pub type StopEntryReturn = Return<StartEntryReturnInner>;
 pub type TimeEntryReturn = Return<Option<TimeEntryInner>>;
 pub type TimeEntryRangeReturn = Vec<TimeEntryInner>;
+pub type DeleteEntryReturn = Vec<i64>;

@@ -43,7 +43,7 @@ trait Query {
         url: U,
         t: &Option<T>,
     ) -> Result<S, crate::error::TogglError>;
-    fn delete<U: IntoUrl>(&self, url: U) -> Result<(), crate::error::TogglError>;
+    fn delete<U: IntoUrl, S: serde::de::DeserializeOwned>(&self, url: U) -> Result<S, crate::error::TogglError>;
 }
 
 impl Query for Toggl {
@@ -97,14 +97,13 @@ impl Query for Toggl {
         }
     }
 
-    fn delete<U: IntoUrl>(&self, url: U) -> Result<(), crate::error::TogglError> {
-        panic!("Fix error handling");
+    fn delete<U: IntoUrl, S: serde::de::DeserializeOwned>(&self, url: U) -> Result<S, crate::error::TogglError> {
         self.client
             .delete(url)
             .basic_auth(&self.api_token, Some("api_token"))
             .send()
-            .and_then(|mut v| v.json())?;
-        Ok(())
+            .and_then(|mut v| v.json())
+            .map_err(|e| e.into())
     }
 
 }

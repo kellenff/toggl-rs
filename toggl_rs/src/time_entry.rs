@@ -1,10 +1,11 @@
 use crate::error::TogglError;
 
 use crate::project::Project;
-use crate::return_types::{convert, StartEntryReturn, StopEntryReturn, TimeEntry, TimeEntryRangeReturn, TimeEntryReturn};
+use crate::return_types::{
+    convert, DeleteEntryReturn, StartEntryReturn, StopEntryReturn, TimeEntry, TimeEntryRangeReturn, TimeEntryReturn,
+};
 use crate::Query;
 use crate::Toggl;
-
 
 #[derive(Serialize, Debug)]
 struct StartEntry {
@@ -97,8 +98,10 @@ impl TimeEntryExt for Toggl {
 
     /// Stops the given entry
     fn stop_entry(&self, t: &TimeEntry) -> Result<(), TogglError> {
-        self.get::<&str, StopEntryReturn>(
-            &format!("https://www.toggl.com/api/v8/time_entries/{}/stop", t.id))?;
+        self.get::<&str, StopEntryReturn>(&format!(
+            "https://www.toggl.com/api/v8/time_entries/{}/stop",
+            t.id
+        ))?;
         Ok(())
     }
 
@@ -125,13 +128,12 @@ impl TimeEntryExt for Toggl {
     }
 
     fn delete_entry(&self, t: &TimeEntry) -> Result<(), TogglError> {
-        panic!("not yet implemented");
-        self.delete(&format!(
+        self.delete::<&str, DeleteEntryReturn>(&format!(
             "https://www.toggl.com/api/v8/time_entries/{}",
             t.id
-        ))
+        ))?;
+        Ok(())
     }
-
 }
 
 impl TimeEntryTrait for Toggl {
@@ -139,18 +141,21 @@ impl TimeEntryTrait for Toggl {
         res.iter()
             .map(|tjson| {
                 convert(
-                        self.projects.as_ref().unwrap_or(&[].to_vec()),
-                        &self.user.workspaces,
-                        &tjson,
-                    )})
+                    self.projects.as_ref().unwrap_or(&[].to_vec()),
+                    &self.user.workspaces,
+                    &tjson,
+                )
+            })
             .collect()
     }
 
     fn convert_single(&self, res: &TimeEntryReturn) -> Option<TimeEntry> {
         if let Some(ref t) = res.data {
-            Some(convert(self.projects.as_ref().unwrap_or(&[].to_vec()),
+            Some(convert(
+                self.projects.as_ref().unwrap_or(&[].to_vec()),
                 &self.user.workspaces,
-                t))
+                t,
+            ))
         } else {
             None
         }

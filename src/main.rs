@@ -2,7 +2,7 @@ use ansi_term::Color::{Green, Red};
 use chrono;
 use clap::{App, Arg, ArgMatches};
 use toggl_rs::project::ProjectTrait;
-use toggl_rs::{init, Toggl, TimeEntry, TimeEntryExt};
+use toggl_rs::{init, TimeEntry, TimeEntryExt, Toggl};
 
 fn print_projects(ids: &[String]) {
     print!("Projects: ");
@@ -58,7 +58,9 @@ fn get_todays_stored_entries(t: &Toggl) -> Vec<TimeEntry> {
 }
 
 fn print_todays_tasks(t: &Toggl) {
-    println!("+----------------------------------------------------------------------------------+");
+    println!(
+        "+----------------------------------------------------------------------------------+"
+    );
     let entries = get_todays_stored_entries(t);
     for (idx, i) in entries.iter().enumerate() {
         let start_format = i.start.with_timezone(&chrono::Local).format("%H:%M");
@@ -71,10 +73,17 @@ fn print_todays_tasks(t: &Toggl) {
         let dur_format = format_duration(&duration);
         println!(
             "|{} | {} | {} | {:<30} | {:^15} | {:>10} |",
-            idx+1, start_format, stop_format, i.description, i.project.name, dur_format
+            idx + 1,
+            start_format,
+            stop_format,
+            i.description,
+            i.project.name,
+            dur_format,
         );
     }
-    println!("+----------------------------------------------------------------------------------+");
+    println!(
+        "+----------------------------------------------------------------------------------+"
+    );
 
     //print stats
     let sum = chrono::Duration::seconds(
@@ -138,13 +147,25 @@ fn run_matches(matches: ArgMatches, t: &Toggl, projects: &toggl_rs::project::Pro
         }
     } else if matches.is_present("swap") {
         let mut entries = get_todays_stored_entries(t);
-        if entries.len() <1 {
+        if entries.len() < 1 {
             println!("Not enough entries stored to swap");
             return;
         }
 
-        entries.sort_by(|a, b| b.cmp(a));    //reverse it
-        t.start_entry(&entries[0].description, &[], &entries[0].project).expect("API Error");
+        entries.sort_by(|a, b| b.cmp(a)); //reverse it
+        t.start_entry(&entries[0].description, &[], &entries[0].project)
+            .expect("API Error");
+    } else if let Some(id_string) = matches.value_of("delete") {
+        let entries = get_todays_stored_entries(t);
+        let id = id_string.parse::<usize>();
+        if let Ok(id) = id {
+            println!("len, id {} {}", entries.len(), id);
+            if id - 1 < entries.len() {
+                t.delete_entry(&entries[id - 1]).expect("API Error");
+            } else {
+                println!("You tried to delete and entry that does not exist");
+            }
+        }
     }
 }
 
@@ -174,18 +195,21 @@ fn main() {
                 .long("stop")
                 .help("Stops the current task"),
         )
+        .arg(Arg::with_name("swap").short("w").long("swap").help(
+            "Stops the current entry and starts the entry that was running before the current one",
+        ))
         .arg(
-            Arg::with_name("swap")
-                .short("w")
-                .long("swap")
-                .help("Stops the current entry and starts the entry that was running before the current one")
+            Arg::with_name("delete")
+                .short("d")
+                .long("delete")
+                .max_values(1)
+                .takes_value(true)
+                .help("Deletes the entry with the idea from the current day"),
         )
         .get_matches();
     run_matches(matches, &toggl, projects);
 
-
     print_projects(&project_ids);
     print_current(&toggl);
     print_todays_tasks(&toggl);
-
 }
