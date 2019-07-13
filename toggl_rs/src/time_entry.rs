@@ -35,7 +35,7 @@ pub trait TimeEntryExt {
         p: &Project,
     ) -> Result<(), TogglError>;
     fn stop_entry(&self, t: &TimeEntry) -> Result<(), TogglError>;
-    fn get_entry_details(&self, id: i64) -> Result<TimeEntry, TogglError>;
+    fn get_entry_details(&self, id: i64) -> Result<Option<TimeEntry>, TogglError>;
     fn get_running_entry(&self) -> Result<Option<TimeEntry>, TogglError>;
     fn update_entry(&self, t: TimeEntry) -> Result<(), TogglError>;
     fn delete_entry(&self, t: &TimeEntry) -> Result<(), TogglError>;
@@ -106,11 +106,9 @@ impl TimeEntryExt for Toggl {
         Ok(())
     }
 
-    fn get_entry_details(&self, id: i64) -> Result<TimeEntry, TogglError> {
-        panic!("Not yet implemented");
-        Err(TogglError::NotImplemented)
-        //self.get(&format!("https://www.toggl.com/api/v8/time_entries/{}", id))
-        //    .map(|r| self.convert_single(&r))
+    fn get_entry_details(&self, id: i64) -> Result<Option<TimeEntry>, TogglError> {
+           self.get::<&str, TimeEntryReturn>(&format!("https://www.toggl.com/api/v8/time_entries/{}", id))
+            .map(|r| self.convert_single(&r))
     }
 
     /// Returns the current running entry or None
@@ -127,7 +125,6 @@ impl TimeEntryExt for Toggl {
             &format!("https://www.toggl.com/api/v8/time_entries/{}", id),
             &entry,
         )?;
-        //panic!("not yet implemented");
         Ok(())
     }
 
