@@ -153,7 +153,7 @@ fn run_matches(
         }
     } else if matches.is_present("swap") {
         let mut entries = get_todays_stored_entries(t);
-        if entries.len() < 1 {
+        if entries.is_empty() {
             return Err("Not enough entries stored to swap".into());
         }
 
@@ -181,7 +181,7 @@ fn run_matches(
         let new_project = new.next().and_then(|s| s.parse::<usize>().ok());
 
         let entries = get_todays_stored_entries(t);
-        if entries.len() < 1 {
+        if entries.is_empty() {
             Err("Not enough entries stored to edit".into())
         } else if let Some(id) = id {
             if (id - 1 < entries.len())
