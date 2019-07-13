@@ -127,7 +127,11 @@ fn print_todays_tasks(t: &Toggl) {
     );
 }
 
-fn run_matches(matches: ArgMatches, t: &Toggl, projects: &toggl_rs::project::Projects) {
+fn run_matches(
+    matches: ArgMatches,
+    t: &Toggl,
+    projects: &toggl_rs::project::Projects,
+) -> Result<(), String> {
     if let Some(mut v) = matches.values_of("start") {
         let title = v.next().unwrap_or("Default");
         let project_idx = v.next().and_then(|s| s.parse::<usize>().ok()).unwrap_or(0);
@@ -135,26 +139,28 @@ fn run_matches(matches: ArgMatches, t: &Toggl, projects: &toggl_rs::project::Pro
         if let Some(p) = project {
             t.start_entry(&title, &[], &p).expect("Error");
             println!("Started Task: {} for Project {}", title, (*p).name);
+            Ok(())
         } else {
-            println!("Project not found");
+            Err("Project not found".into())
         }
     } else if matches.is_present("stop") {
         let res = t.get_running_entry().expect("API Error");
         if let Some(current_entry) = res {
             t.stop_entry(&current_entry).expect("Error");
+            Ok(())
         } else {
-            println!("No task currently running");
+            Err("No task currently running".into())
         }
     } else if matches.is_present("swap") {
         let mut entries = get_todays_stored_entries(t);
         if entries.len() < 1 {
-            println!("Not enough entries stored to swap");
-            return;
+            return Err("Not enough entries stored to swap".into());
         }
 
         entries.sort_by(|a, b| b.cmp(a)); //reverse it
         t.start_entry(&entries[0].description, &[], &entries[0].project)
             .expect("API Error");
+        Ok(())
     } else if let Some(id_string) = matches.value_of("delete") {
         let entries = get_todays_stored_entries(t);
         let id = id_string.parse::<usize>();
@@ -162,10 +168,43 @@ fn run_matches(matches: ArgMatches, t: &Toggl, projects: &toggl_rs::project::Pro
             println!("len, id {} {}", entries.len(), id);
             if id - 1 < entries.len() {
                 t.delete_entry(&entries[id - 1]).expect("API Error");
+                Ok(())
             } else {
-                println!("You tried to delete and entry that does not exist");
+                Err("You tried to delete and entry that does not exist".into())
             }
+        } else {
+            Err("Could not parse id".into())
         }
+    } else if let Some(mut new) = matches.values_of("edit") {
+        let id: Option<usize> = new.next().and_then(|s| s.parse::<usize>().ok());
+        let new_description = new.next();
+        let new_project = new.next().and_then(|s| s.parse::<usize>().ok());
+
+        let entries = get_todays_stored_entries(t);
+        if entries.len() < 1 {
+            Err("Not enough entries stored to edit".into())
+        } else if let Some(id) = id {
+            if (id - 1 < entries.len())
+                & (new_description.is_some())
+                & (new_project.is_some())
+                & (new_project.unwrap_or(0) < projects.len())
+            {
+                let project = projects[new_project.unwrap()].clone();
+
+                let mut entry = entries[id - 1].clone();
+                entry.description = new_description.unwrap().to_string();
+                entry.project = project;
+                t.update_entry(entry).expect("API Error");
+                Ok(())
+            } else {
+                Err("Argument requirement not fulfilled".into())
+            }
+        } else {
+            Err("Could not parse values".into())
+        }
+    } else {
+        // nothing was parsed which is fine
+        Ok(())
     }
 }
 
@@ -185,8 +224,8 @@ fn main() {
                 .short("s")
                 .long("start")
                 .help("Starts a task with the appropriate id")
-                .min_values(1)
-                .max_values(2)
+                .number_of_values(2)
+                .value_names(&["description", "project_id"])
                 .takes_value(true),
         )
         .arg(
@@ -202,14 +241,26 @@ fn main() {
             Arg::with_name("delete")
                 .short("d")
                 .long("delete")
-                .max_values(1)
+                .number_of_values(1)
+                .value_names(&["project_id"])
                 .takes_value(true)
                 .help("Deletes the entry with the idea from the current day"),
         )
+        .arg(
+            Arg::with_name("edit")
+                .short("e")
+                .long("edit")
+                .number_of_values(3)
+                .value_names(&["task_number", "new_description", "new_project_id"])
+                .help("Edits the entry given by the first "),
+        )
         .get_matches();
-    run_matches(matches, &toggl, projects);
 
     print_projects(&project_ids);
-    print_current(&toggl);
-    print_todays_tasks(&toggl);
+    if let Err(s) = run_matches(matches, &toggl, projects) {
+        println!("Error in executing: {}", s);
+    } else {
+        print_current(&toggl);
+        print_todays_tasks(&toggl);
+    }
 }

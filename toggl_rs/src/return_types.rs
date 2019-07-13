@@ -9,7 +9,7 @@ pub struct Return<T> {
     pub data: T,
 }
 
-#[derive(Debug, Eq)]
+#[derive(Clone, Debug, Eq)]
 pub struct TimeEntry {
     pub id: i64,
     pub guid: uuid::Uuid,
