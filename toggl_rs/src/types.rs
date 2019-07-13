@@ -4,7 +4,7 @@ use std::cmp::Ordering;
 use std::rc::Rc;
 
 /// The base type for all returned data
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct Return<T> {
     pub data: T,
 }
@@ -38,25 +38,6 @@ impl PartialOrd for TimeEntry {
 impl Ord for TimeEntry {
     fn cmp(&self, other: &Self) -> Ordering {
         self.start.cmp(&other.start)
-    }
-}
-
-impl From<TimeEntry> for TimeEntryReturn {
-    fn from(t: TimeEntry) -> Self {
-        TimeEntryReturn {
-            data: Some(TimeEntryInner {
-                id: t.id,
-                guid: t.guid,
-                wid: t.workspace.id,
-                pid: t.project.id,
-                start: t.start,
-                stop: t.stop,
-                duration: t.duration,
-                description: t.description,
-                duronly: t.duronly,
-                at: t.at,
-            }),
-        }
     }
 }
 
@@ -119,3 +100,27 @@ pub type StopEntryReturn = Return<StartEntryReturnInner>;
 pub type TimeEntryReturn = Return<Option<TimeEntryInner>>;
 pub type TimeEntryRangeReturn = Vec<TimeEntryInner>;
 pub type DeleteEntryReturn = Vec<i64>;
+
+#[derive(Serialize, Debug)]
+pub struct TimeEntryUpdate {
+    time_entry: TimeEntryInner,
+}
+
+impl From<TimeEntry> for TimeEntryUpdate {
+    fn from(t: TimeEntry) -> Self {
+        TimeEntryUpdate {
+            time_entry: TimeEntryInner {
+                id: t.id,
+                guid: t.guid,
+                wid: t.workspace.id,
+                pid: t.project.id,
+                start: t.start,
+                stop: t.stop,
+                duration: t.duration,
+                description: t.description,
+                duronly: t.duronly,
+                at: t.at,
+            },
+        }
+    }
+}

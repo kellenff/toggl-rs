@@ -1,8 +1,9 @@
 use crate::error::TogglError;
 
 use crate::project::Project;
-use crate::return_types::{
-    convert, DeleteEntryReturn, StartEntryReturn, StopEntryReturn, TimeEntry, TimeEntryRangeReturn, TimeEntryReturn,
+use crate::types::{
+    convert, DeleteEntryReturn, StartEntryReturn, StopEntryReturn, TimeEntry, TimeEntryRangeReturn,
+    TimeEntryReturn, TimeEntryUpdate,
 };
 use crate::Query;
 use crate::Toggl;
@@ -120,11 +121,14 @@ impl TimeEntryExt for Toggl {
     }
 
     fn update_entry(&self, t: TimeEntry) -> Result<(), TogglError> {
-        panic!("not yet implemented");
-        let entry: TimeEntryReturn = t.into();
-        //self.put(
-        //    &format!("https://www.toggl.com/api/v8/time_entries/{}", entry.data.id),
-        //    &Some(entry))
+        let id = t.id;
+        let entry: TimeEntryUpdate = t.into();
+        self.put::<&str, TimeEntryUpdate, TimeEntryReturn>(
+            &format!("https://www.toggl.com/api/v8/time_entries/{}", id),
+            &entry,
+        )?;
+        //panic!("not yet implemented");
+        Ok(())
     }
 
     fn delete_entry(&self, t: &TimeEntry) -> Result<(), TogglError> {
