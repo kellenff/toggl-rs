@@ -2,7 +2,7 @@ use ansi_term::Color::{Green, Red};
 use chrono;
 use clap::{App, Arg, ArgMatches};
 use toggl_rs::project::ProjectTrait;
-use toggl_rs::{init, TimeEntry, TimeEntryExt, Toggl};
+use toggl_rs::{init, TimeEntry, Toggl, TogglExt};
 
 fn print_projects(ids: &[String]) {
     print!("Projects: ");
