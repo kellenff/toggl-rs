@@ -21,9 +21,9 @@ fn format_duration(c: &chrono::Duration) -> String {
         st.push_str(&format!("{:2}:", hours));
     }
     if hours == 0 {
-        st.push_str(&format!("{} mins", mins));
+        st.push_str(&format!("{} m", mins));
     } else if (hours > 0) | (mins > 0) {
-        st.push_str(&format!("{:02} mins", mins));
+        st.push_str(&format!("{:02} h", mins));
     }
     st
 }
@@ -59,7 +59,7 @@ fn get_todays_stored_entries(t: &Toggl) -> Vec<TimeEntry> {
 
 fn print_todays_tasks(t: &Toggl) {
     println!(
-        "+----------------------------------------------------------------------------------+"
+        "+-----------------------------------------------------------------------------------+"
     );
     let entries = get_todays_stored_entries(t);
     for (idx, i) in entries.iter().enumerate() {
@@ -72,7 +72,7 @@ fn print_todays_tasks(t: &Toggl) {
         let duration = i.stop.unwrap() - i.start;
         let dur_format = format_duration(&duration);
         println!(
-            "|{} | {} | {} | {:<30} | {:^15} | {:>10} |",
+            "|{:2} | {} | {} | {:<30} | {:^15} | {:>10} |",
             idx + 1,
             start_format,
             stop_format,
@@ -82,7 +82,7 @@ fn print_todays_tasks(t: &Toggl) {
         );
     }
     println!(
-        "+----------------------------------------------------------------------------------+"
+        "+-----------------------------------------------------------------------------------+"
     );
 
     //print stats
