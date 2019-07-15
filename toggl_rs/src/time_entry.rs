@@ -21,23 +21,46 @@ struct StartTimeEntry {
     created_with: String,
 }
 
+
+/// Main Trait for working with time entries on the toggl struct.
 pub trait TimeEntryExt {
+    /// Get all time entries from the api.
     fn get_time_entries(&self) -> Result<Vec<TimeEntry>, TogglError>;
+
+    /// Get all time entries from the specified range (both are optional arguments)
     fn get_time_entries_range(
         &self,
         start: Option<chrono::DateTime<chrono::Utc>>,
         end: Option<chrono::DateTime<chrono::Utc>>,
     ) -> Result<Vec<TimeEntry>, TogglError>;
+
+    /// Starts a time entry with the description, tags and a given project.
     fn start_entry(
         &self,
         description: &str,
         tags: &[String],
         p: &Project,
     ) -> Result<(), TogglError>;
+
+    /// Stops the supplied time entry. While we technically only look at the id, this is not guaranteed by updates in the api
     fn stop_entry(&self, t: &TimeEntry) -> Result<(), TogglError>;
+
+    /// Returns the time entry for the given id
     fn get_entry_details(&self, id: i64) -> Result<Option<TimeEntry>, TogglError>;
+
+    /// Returns the currently running entry (i.e., a time entry that has no end time) or returns None if it does not exist
     fn get_running_entry(&self) -> Result<Option<TimeEntry>, TogglError>;
+
+    /// Update the time entry with all values that in the time entry. Notice that we need move semantics here.
+    /// # Example
+    /// ```
+    /// let mut entry = t.get_current_entry();
+    /// entry.description = "test2".to_string();
+    /// t.update_entry(entry);
+    /// ```
     fn update_entry(&self, t: TimeEntry) -> Result<(), TogglError>;
+
+    /// Deletes the entry.
     fn delete_entry(&self, t: &TimeEntry) -> Result<(), TogglError>;
 }
 
@@ -74,8 +97,6 @@ impl TimeEntryExt for Toggl {
         Ok(self.convert_response(&res))
     }
 
-    /// This starts the entry with the `description` and the tags given by `tags` in the project `project`. It automatically parses the return values to see if we have a valid return and the operation was successful.
-    /// This automatically stops the current running entry (serverside).
     fn start_entry(
         &self,
         description: &str,
@@ -97,7 +118,6 @@ impl TimeEntryExt for Toggl {
         Ok(())
     }
 
-    /// Stops the given entry
     fn stop_entry(&self, t: &TimeEntry) -> Result<(), TogglError> {
         self.get::<&str, StopEntryReturn>(&format!(
             "https://www.toggl.com/api/v8/time_entries/{}/stop",
@@ -111,8 +131,6 @@ impl TimeEntryExt for Toggl {
             .map(|r| self.convert_single(&r))
     }
 
-    /// Returns the current running entry or None
-    /// Throws an error if there was a problem with the api
     fn get_running_entry(&self) -> Result<Option<TimeEntry>, TogglError> {
         self.get("https://www.toggl.com/api/v8/time_entries/current")
             .map(|r| self.convert_single(&r))

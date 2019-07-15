@@ -1,3 +1,5 @@
+//! This is a library to interact with the toggl.com api version 8.
+//!
 extern crate chrono;
 extern crate serde_json;
 #[macro_use]
@@ -15,18 +17,26 @@ mod types;
 mod user;
 mod workspace;
 
+use crate::project::ProjectTrait;
 pub use crate::time_entry::TimeEntryExt as TogglExt;
 pub use crate::types::TimeEntry;
 
+/// Call this to get a toggl object on which you can call various methods.
+/// This will be hour handler to the api.
+/// Notice, that this will already query the api.
 pub fn init(api_token: &str) -> Result<Toggl, crate::error::TogglError> {
-    auth::init(api_token)
+    let mut t = auth::init(api_token)?;
+    t.fill_projects();
+    Ok(t)
 }
 
 #[derive(Debug)]
+/// The main struct to interact with.
 pub struct Toggl {
     api_token: String,
     client: reqwest::Client,
     user: crate::user::User,
+    /// A handler to all projects currently available in Toggl.
     pub projects: Option<Vec<Rc<crate::project::Project>>>,
 }
 

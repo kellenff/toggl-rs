@@ -210,7 +210,6 @@ fn run_matches(
 
 fn main() {
     let mut toggl = init(include_str!("../api_token")).expect("Could not connect to toggl");
-    toggl.fill_projects();
     let projects = toggl.projects.as_ref().unwrap();
     let project_ids = projects
         .iter()

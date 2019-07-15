@@ -9,6 +9,8 @@ pub struct Return<T> {
     pub data: T,
 }
 
+/// The Main struct for the timeentry.
+/// Will have a Rc to the project and workspace it belongs to.
 #[derive(Clone, Debug, Eq)]
 pub struct TimeEntry {
     pub id: i64,
@@ -79,13 +81,18 @@ pub struct StartEntryReturnInner {
     description: String,
 }
 
+/// TimeEntry format that comes from the json api. Notice that it includes ids and not workspace/projects.
 #[derive(Deserialize, Debug, Serialize)]
 pub struct TimeEntryInner {
     pub id: i64,
     pub guid: uuid::Uuid,
+    /// Workspace id
     pub wid: i64,
+    /// Project id
     pub pid: i64,
+    /// Start time, will be parsed into Utc
     pub start: chrono::DateTime<chrono::Utc>,
+    /// End time (optional), will be parsed into Utc
     pub stop: Option<chrono::DateTime<chrono::Utc>>,
     pub duration: i64,
     pub description: String,
