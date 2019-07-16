@@ -1,7 +1,6 @@
 use ansi_term::Color::{Green, Red};
 use chrono;
 use clap::{App, Arg, ArgMatches};
-use toggl_rs::project::ProjectTrait;
 use toggl_rs::{init, TimeEntry, Toggl, TogglExt};
 
 fn print_projects(ids: &[String]) {
@@ -95,8 +94,6 @@ fn print_todays_tasks(t: &Toggl) {
     );
     let project_nums = t
         .projects
-        .as_ref()
-        .unwrap_or(&Vec::new())
         .iter()
         .map(|project| {
             (
@@ -209,8 +206,8 @@ fn run_matches(
 }
 
 fn main() {
-    let mut toggl = init(include_str!("../api_token")).expect("Could not connect to toggl");
-    let projects = toggl.projects.as_ref().unwrap();
+    let toggl = init(include_str!("../api_token")).expect("Could not connect to toggl");
+    let projects = &toggl.projects;
     let project_ids = projects
         .iter()
         .map(|p| p.name.clone())

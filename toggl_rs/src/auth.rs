@@ -52,7 +52,7 @@ pub fn init(api_token: &str) -> Result<Toggl, crate::error::TogglError> {
             api_token: ap.to_owned(),
             client,
             user,
-            projects: None,
+            projects: Vec::new(),
         })
     } else {
         Err(crate::error::TogglError::AuthError(

@@ -1,5 +1,15 @@
-//! This is a library to interact with the toggl.com api version 8.
+//! This is a library to interact with the toggl.com api version 8..
+//! Your main interaction with the api will be the Toggl struct. Methods are in the TogglExt trait including the main objects being `Project` and `TimeEntry`.
 //!
+//! # Example
+//! ```
+//! use toggl_rs::{init, TimeEntry, Toggl, TogglExt};
+//! let toggl = init(APITOKEN).expect("Could not connect to toggl");
+//! let project = toggl.projects[0];
+//! toggl.start_entry("test", &[], project);
+//! println!("{}", toggl.current_running_entry());
+//! toggl.stop_entry();
+//! ```
 extern crate chrono;
 extern crate serde_json;
 #[macro_use]
@@ -35,9 +45,10 @@ pub fn init(api_token: &str) -> Result<Toggl, crate::error::TogglError> {
 pub struct Toggl {
     api_token: String,
     client: reqwest::Client,
-    user: crate::user::User,
+    /// Information of the user.
+    pub user: crate::user::User,
     /// A handler to all projects currently available in Toggl.
-    pub projects: Option<Vec<Rc<crate::project::Project>>>,
+    pub projects: Vec<Rc<crate::project::Project>>,
 }
 
 trait Query {

@@ -19,7 +19,7 @@ pub trait ProjectTrait {
 
 impl ProjectTrait for Toggl {
     fn fill_projects(&mut self) {
-        self.projects = Some(
+        self.projects =
             self
             .user
             .workspaces
@@ -31,7 +31,7 @@ impl ProjectTrait for Toggl {
                 res.into_iter()
                     .map(Rc::new)
             })
-            .collect());
+            .collect();
 
     }
 }

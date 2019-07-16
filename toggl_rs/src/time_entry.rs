@@ -160,7 +160,7 @@ impl TimeEntryTrait for Toggl {
         res.iter()
             .map(|tjson| {
                 convert(
-                    self.projects.as_ref().unwrap_or(&[].to_vec()),
+                    self.projects.as_ref(),
                     &self.user.workspaces,
                     &tjson,
                 )
@@ -171,7 +171,7 @@ impl TimeEntryTrait for Toggl {
     fn convert_single(&self, res: &TimeEntryReturn) -> Option<TimeEntry> {
         if let Some(ref t) = res.data {
             Some(convert(
-                self.projects.as_ref().unwrap_or(&[].to_vec()),
+                self.projects.as_ref(),
                 &self.user.workspaces,
                 t,
             ))
