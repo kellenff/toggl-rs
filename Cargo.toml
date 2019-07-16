@@ -1,7 +1,8 @@
 [package]
 name = "toggl"
-version = "0.1.0"
-authors = ["Kellen Frodelius-Fujimoto <kellen@kellenfujimoto.com>"]
+version = "0.2.0"
+authors = ["Kellen Frodelius-Fujimoto <kellen@kellenfujimoto.com>",
+           "Christian Engels <Narfinger@users.noreply.github.com"]
 edition = "2018"
 description = "A typed interface to the Toggl v8 API"
 repository = "https://github.com/rakenodiax/toggl-rs"
