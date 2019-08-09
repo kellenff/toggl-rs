@@ -27,10 +27,10 @@ mod types;
 mod user;
 mod workspace;
 
+pub use crate::error::TogglError;
 use crate::project::ProjectTrait;
 pub use crate::time_entry::TimeEntryExt as TogglExt;
 pub use crate::types::TimeEntry;
-pub use crate::error::TogglError;
 
 /// Call this to get a toggl object on which you can call various methods.
 /// This will be hour handler to the api.

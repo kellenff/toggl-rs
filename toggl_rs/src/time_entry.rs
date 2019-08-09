@@ -21,7 +21,6 @@ struct StartTimeEntry {
     created_with: String,
 }
 
-
 /// Main Trait for working with time entries on the toggl struct.
 pub trait TimeEntryExt {
     /// Get all time entries from the api.
@@ -127,8 +126,11 @@ impl TimeEntryExt for Toggl {
     }
 
     fn get_entry_details(&self, id: i64) -> Result<Option<TimeEntry>, TogglError> {
-           self.get::<&str, TimeEntryReturn>(&format!("https://www.toggl.com/api/v8/time_entries/{}", id))
-            .map(|r| self.convert_single(&r))
+        self.get::<&str, TimeEntryReturn>(&format!(
+            "https://www.toggl.com/api/v8/time_entries/{}",
+            id
+        ))
+        .map(|r| self.convert_single(&r))
     }
 
     fn get_running_entry(&self) -> Result<Option<TimeEntry>, TogglError> {
@@ -158,23 +160,13 @@ impl TimeEntryExt for Toggl {
 impl TimeEntryTrait for Toggl {
     fn convert_response(&self, res: &TimeEntryRangeReturn) -> Vec<TimeEntry> {
         res.iter()
-            .map(|tjson| {
-                convert(
-                    self.projects.as_ref(),
-                    &self.user.workspaces,
-                    &tjson,
-                )
-            })
+            .map(|tjson| convert(self.projects.as_ref(), &self.user.workspaces, &tjson))
             .collect()
     }
 
     fn convert_single(&self, res: &TimeEntryReturn) -> Option<TimeEntry> {
         if let Some(ref t) = res.data {
-            Some(convert(
-                self.projects.as_ref(),
-                &self.user.workspaces,
-                t,
-            ))
+            Some(convert(self.projects.as_ref(), &self.user.workspaces, t))
         } else {
             None
         }

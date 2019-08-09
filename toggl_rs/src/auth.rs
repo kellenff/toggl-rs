@@ -1,4 +1,3 @@
-
 use crate::user::User;
 use crate::workspace::Workspace;
 
@@ -15,7 +14,6 @@ impl std::convert::From<reqwest::header::InvalidHeaderValue> for crate::error::T
         crate::error::TogglError::AuthError("Could not parse Authentication api_token".to_owned())
     }
 }
-
 
 #[derive(Deserialize, Debug, Serialize)]
 struct UserJSON {
