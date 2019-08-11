@@ -3,17 +3,6 @@ use crate::workspace::Workspace;
 
 use crate::Toggl;
 use std::rc::Rc;
-impl std::convert::From<reqwest::Error> for crate::error::TogglError {
-    fn from(e: reqwest::Error) -> crate::error::TogglError {
-        crate::error::TogglError::ReqwestError(e)
-    }
-}
-
-impl std::convert::From<reqwest::header::InvalidHeaderValue> for crate::error::TogglError {
-    fn from(_e: reqwest::header::InvalidHeaderValue) -> crate::error::TogglError {
-        crate::error::TogglError::AuthError("Could not parse Authentication api_token".to_owned())
-    }
-}
 
 #[derive(Deserialize, Debug, Serialize)]
 struct UserJSON {
