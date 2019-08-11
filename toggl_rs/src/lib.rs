@@ -35,10 +35,12 @@ pub use crate::types::TimeEntry;
 /// Call this to get a toggl object on which you can call various methods.
 /// This will be hour handler to the api.
 /// Notice, that this will already query the api.
-pub fn init(api_token: &str) -> Result<Toggl, crate::error::TogglError> {
-    let mut t = auth::init(api_token)?;
-    t.fill_projects();
-    Ok(t)
+impl Toggl {
+    pub fn init(api_token: &str) -> Result<Toggl, crate::error::TogglError> {
+        let mut t = auth::init(api_token)?;
+        t.fill_projects();
+        Ok(t)
+    }
 }
 
 #[derive(Debug)]

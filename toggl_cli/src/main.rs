@@ -1,7 +1,7 @@
 use ansi_term::Color::{Green, Red};
 use chrono;
 use clap::{App, Arg, ArgMatches};
-use toggl_rs::{init, TimeEntry, Toggl, TogglExt};
+use toggl_rs::{TimeEntry, Toggl, TogglExt};
 
 fn print_projects(ids: &[String]) {
     print!("Projects: ");
@@ -206,7 +206,7 @@ fn run_matches(
 }
 
 fn main() {
-    let toggl = init(include_str!("../api_token")).expect("Could not connect to toggl");
+    let toggl = Toggl::init(include_str!("../api_token")).expect("Could not connect to toggl");
     let projects = &toggl.projects;
     let project_ids = projects
         .iter()
