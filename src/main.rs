@@ -56,7 +56,7 @@ fn get_todays_stored_entries(t: &Toggl) -> Vec<TimeEntry> {
     entries
 }
 
-fn print_todays_tasks(t: &Toggl) {
+fn print_todays_timeentries(t: &Toggl) {
     println!(
         "+-----------------------------------------------------------------------------------+"
     );
@@ -100,9 +100,9 @@ fn print_todays_tasks(t: &Toggl) {
                 project.name.clone(),
                 entries
                     .iter()
-                    .filter(|task| task.project == *project)
-                    .map(|task| task.stop.unwrap() - task.start)
-                    .map(|task| task.num_seconds())
+                    .filter(|time_entry| time_entry.project == *project)
+                    .map(|time_entry| time_entry.stop.unwrap() - time_entry.start)
+                    .map(|time_entry| time_entry.num_seconds())
                     .sum::<i64>(),
             )
         })
@@ -135,7 +135,7 @@ fn run_matches(
         let project = projects.get(project_idx);
         if let Some(p) = project {
             t.start_entry(&title, &[], &p).expect("Error");
-            println!("Started Task: {} for Project {}", title, (*p).name);
+            println!("Started Time Entry: {} for Project {}", title, (*p).name);
             Ok(())
         } else {
             Err("Project not found".into())
@@ -146,7 +146,7 @@ fn run_matches(
             t.stop_entry(&current_entry).expect("Error");
             Ok(())
         } else {
-            Err("No task currently running".into())
+            Err("No time entry currently running".into())
         }
     } else if matches.is_present("swap") {
         let mut entries = get_todays_stored_entries(t);
@@ -219,7 +219,7 @@ fn main() {
             Arg::with_name("start")
                 .short("s")
                 .long("start")
-                .help("Starts a task with the appropriate id")
+                .help("Starts a time entry with the appropriate id")
                 .number_of_values(2)
                 .value_names(&["description", "project_id"])
                 .takes_value(true),
@@ -228,7 +228,7 @@ fn main() {
             Arg::with_name("stop")
                 .short("p")
                 .long("stop")
-                .help("Stops the current task"),
+                .help("Stops the current time entry"),
         )
         .arg(Arg::with_name("swap").short("w").long("swap").help(
             "Stops the current entry and starts the entry that was running before the current one",
@@ -247,7 +247,7 @@ fn main() {
                 .short("e")
                 .long("edit")
                 .number_of_values(3)
-                .value_names(&["task_number", "new_description", "new_project_id"])
+                .value_names(&["timeentry_number", "new_description", "new_project_id"])
                 .help("Edits the entry given by the first "),
         )
         .get_matches();
@@ -257,6 +257,6 @@ fn main() {
         println!("Error in executing: {}", s);
     } else {
         print_current(&toggl);
-        print_todays_tasks(&toggl);
+        print_todays_timeentries(&toggl);
     }
 }
