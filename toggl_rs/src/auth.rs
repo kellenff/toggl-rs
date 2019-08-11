@@ -1,19 +1,17 @@
-use crate::user::User;
 use crate::workspace::Workspace;
 
 use crate::Toggl;
-use std::rc::Rc;
 
 #[derive(Deserialize, Debug, Serialize)]
-struct UserJSON {
-    fullname: String,
-    workspaces: Vec<Workspace>,
+pub struct UserJSON {
+    pub fullname: String,
+    pub workspaces: Vec<Workspace>,
 }
 
 #[derive(Deserialize, Debug, Serialize)]
-struct InitResponse {
+pub struct InitResponse {
     since: i64,
-    data: UserJSON,
+    pub data: UserJSON,
 }
 
 pub fn init(api_token: &str) -> Result<Toggl, crate::error::TogglError> {
@@ -25,20 +23,11 @@ pub fn init(api_token: &str) -> Result<Toggl, crate::error::TogglError> {
         .send()?;
     if resp.status().is_success() {
         let init_response: InitResponse = resp.json()?;
-        let user = User {
-            fullname: init_response.data.fullname,
-            workspaces: init_response
-                .data
-                .workspaces
-                .into_iter()
-                .map(Rc::new)
-                .collect(),
-        };
 
         Ok(Toggl {
             api_token: ap.to_owned(),
             client,
-            user,
+            user: init_response.into(),
             projects: Vec::new(),
         })
     } else {
