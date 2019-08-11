@@ -2,7 +2,7 @@ use crate::error::TogglError;
 
 use crate::project::Project;
 use crate::types::{
-    convert, DeleteEntryReturn, StartEntryReturn, StopEntryReturn, TimeEntry, TimeEntryRangeReturn,
+    DeleteEntryReturn, StartEntryReturn, StopEntryReturn, TimeEntry, TimeEntryRangeReturn,
     TimeEntryReturn, TimeEntryUpdate,
 };
 use crate::Query;
@@ -160,13 +160,13 @@ impl TimeEntryExt for Toggl {
 impl TimeEntryTrait for Toggl {
     fn convert_response(&self, res: &TimeEntryRangeReturn) -> Vec<TimeEntry> {
         res.iter()
-            .map(|tjson| convert(self.projects.as_ref(), &self.user.workspaces, &tjson))
+            .map(|tjson| (self.projects.as_ref(), &self.user.workspaces, tjson).into())
             .collect()
     }
 
     fn convert_single(&self, res: &TimeEntryReturn) -> Option<TimeEntry> {
         if let Some(ref t) = res.data {
-            Some(convert(self.projects.as_ref(), &self.user.workspaces, t))
+            Some((&self.projects, &self.user.workspaces, t).into())
         } else {
             None
         }

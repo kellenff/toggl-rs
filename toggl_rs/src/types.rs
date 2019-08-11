@@ -43,28 +43,33 @@ impl Ord for TimeEntry {
     }
 }
 
-pub fn convert(p: &[Rc<Project>], w: &[Rc<Workspace>], tjson: &TimeEntryInner) -> TimeEntry {
-    let workspace = w
-        .iter()
-        .find(|ws| ws.id == tjson.wid)
-        .expect("Workspaces was not filled correctly")
-        .clone();
-    let project = p
-        .iter()
-        .find(|p| p.id == tjson.pid)
-        .expect("Projects was not filled correctly")
-        .clone();
-    TimeEntry {
-        id: tjson.id,
-        guid: tjson.guid,
-        workspace,
-        project,
-        start: tjson.start,
-        stop: tjson.stop,
-        duration: tjson.duration,
-        description: tjson.description.clone(),
-        duronly: tjson.duronly,
-        at: tjson.at,
+impl From<(&Vec<Rc<Project>>, &Vec<Rc<Workspace>>, &TimeEntryInner)> for TimeEntry {
+    fn from(value: (&Vec<Rc<Project>>, &Vec<Rc<Workspace>>, &TimeEntryInner)) -> TimeEntry {
+        let p = value.0;
+        let w = value.1;
+        let tjson = value.2;
+        let workspace = w
+            .iter()
+            .find(|ws| ws.id == tjson.wid)
+            .expect("Workspaces was not filled correctly")
+            .clone();
+        let project = p
+            .iter()
+            .find(|p| p.id == tjson.pid)
+            .expect("Projects was not filled correctly")
+            .clone();
+        TimeEntry {
+            id: tjson.id,
+            guid: tjson.guid,
+            workspace,
+            project,
+            start: tjson.start,
+            stop: tjson.stop,
+            duration: tjson.duration,
+            description: tjson.description.clone(),
+            duronly: tjson.duronly,
+            at: tjson.at,
+        }
     }
 }
 
