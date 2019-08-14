@@ -17,7 +17,7 @@ struct StartEntry {
 struct StartTimeEntry {
     description: Option<String>,
     tags: Vec<String>,
-    pid: i64,
+    pid: Option<i64>,
     created_with: String,
 }
 
@@ -34,11 +34,11 @@ pub trait TimeEntryExt {
     ) -> Result<Vec<TimeEntry>, TogglError>;
 
     /// Starts a time entry with the description, tags and a given project.
-    fn start_entry(
+    fn start_entry<T: AsRef<Project>>(
         &self,
         description: Option<String>,
         tags: &[String],
-        p: &Project,
+        p: Option<T>,
     ) -> Result<(), TogglError>;
 
     /// Stops the supplied time entry. While we technically only look at the id, this is not guaranteed by updates in the api
@@ -96,17 +96,17 @@ impl TimeEntryExt for Toggl {
         Ok(self.convert_response(&res))
     }
 
-    fn start_entry(
+    fn start_entry<T: AsRef<Project>>(
         &self,
         description: Option<String>,
         tags: &[String],
-        p: &Project,
+        p: Option<T>,
     ) -> Result<(), TogglError> {
         let t = StartEntry {
             time_entry: StartTimeEntry {
                 description: description,
                 tags: tags.to_owned(),
-                pid: p.id,
+                pid: p.map(|v| v.as_ref().id),
                 created_with: "toggl-rs".to_string(),
             },
         };

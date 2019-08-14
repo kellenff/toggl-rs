@@ -2,6 +2,7 @@ use ansi_term::Color::{Green, Red};
 use chrono;
 use clap::{App, Arg, ArgMatches};
 use std::fs;
+use std::rc::Rc;
 use toggl_rs::{TimeEntry, Toggl, TogglExt};
 
 fn print_projects(ids: &[String]) {
@@ -37,7 +38,11 @@ fn print_current(t: &Toggl) {
             "{}: {}@{}, {} Running for: {}",
             Green.paint("Running"),
             current.description.unwrap_or("".to_string()),
-            current.project.name,
+            current
+                .project
+                .as_ref()
+                .map(|v| v.name.as_ref())
+                .unwrap_or(""),
             current.start.with_timezone(&chrono::Local).format("%H:%M"),
             format_duration(&running_for)
         );
@@ -77,7 +82,7 @@ fn print_todays_timeentries(t: &Toggl) {
             start_format,
             stop_format,
             i.description.as_ref().unwrap_or(&"".to_string()),
-            i.project.name,
+            i.project.as_ref().map(|v| v.name.as_ref()).unwrap_or(""),
             dur_format,
         );
     }
@@ -93,6 +98,12 @@ fn print_todays_timeentries(t: &Toggl) {
             .map(|t| t.num_seconds())
             .sum::<i64>(),
     );
+    let dummy_project = Rc::new(toggl_rs::project::Project {
+        id: -1,
+        name: "No Project".to_string(),
+        billable: false,
+        active: false,
+    });
     let project_nums = t
         .projects
         .iter()
@@ -101,7 +112,9 @@ fn print_todays_timeentries(t: &Toggl) {
                 project.name.clone(),
                 entries
                     .iter()
-                    .filter(|time_entry| time_entry.project == *project)
+                    .filter(|time_entry| {
+                        time_entry.project.as_ref().unwrap_or(&dummy_project) == project
+                    })
                     .map(|time_entry| time_entry.stop.unwrap() - time_entry.start)
                     .map(|time_entry| time_entry.num_seconds())
                     .sum::<i64>(),
@@ -132,15 +145,17 @@ fn run_matches(
 ) -> Result<(), String> {
     if let Some(mut v) = matches.values_of("start") {
         let title = v.next().map(|v| v.to_owned());
-        let project_idx = v.next().and_then(|s| s.parse::<usize>().ok()).unwrap_or(0);
-        let project = projects.get(project_idx);
-        if let Some(p) = project {
-            t.start_entry(title.to_owned(), &[], &p).expect("Error");
-            println!("Started Time Entry: {} for Project {}", title.unwrap_or("".to_string()), (*p).name);
-            Ok(())
-        } else {
-            Err("Project not found".into())
-        }
+        let project_idx = v.next().and_then(|s| s.parse::<usize>().ok());
+        let project = project_idx.and_then(|v| projects.get(v));
+
+        t.start_entry(title.to_owned(), &[], project)
+            .expect("Error");
+        println!(
+            "Started Time Entry: {} for Project {}",
+            title.unwrap_or("".to_string()),
+            project.as_ref().map(|v| v.name.as_ref()).unwrap_or("")
+        );
+        Ok(())
     } else if matches.is_present("stop") {
         let res = t.get_running_entry().expect("API Error");
         if let Some(current_entry) = res {
@@ -156,8 +171,12 @@ fn run_matches(
         }
 
         entries.sort_by(|a, b| b.cmp(a)); //reverse it
-        t.start_entry(entries[0].description.to_owned(), &[], &entries[0].project)
-            .expect("API Error");
+        t.start_entry(
+            entries[0].description.to_owned(),
+            &[],
+            entries[0].project.clone(),
+        )
+        .expect("API Error");
         Ok(())
     } else if let Some(id_string) = matches.value_of("delete") {
         let entries = get_todays_stored_entries(t);
@@ -191,7 +210,7 @@ fn run_matches(
 
                 let mut entry = entries[id - 1].clone();
                 entry.description = new_description.map(|v| v.to_string());
-                entry.project = project;
+                entry.project = Some(project);
                 t.update_entry(entry).expect("API Error");
                 Ok(())
             } else {

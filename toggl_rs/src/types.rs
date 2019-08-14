@@ -16,7 +16,7 @@ pub struct TimeEntry {
     pub id: i64,
     pub guid: uuid::Uuid,
     pub workspace: Rc<Workspace>,
-    pub project: Rc<Project>,
+    pub project: Option<Rc<Project>>,
     pub start: chrono::DateTime<chrono::Utc>,
     pub stop: Option<chrono::DateTime<chrono::Utc>>,
     pub duration: i64,
@@ -43,6 +43,11 @@ impl Ord for TimeEntry {
     }
 }
 
+/// Compares if the project id and the possible project id are the same, if `tjsonid` is None, we return false
+fn project_cmp(p: &Project, tjsonid: Option<i64>) -> bool {
+    tjsonid.map(|v| v == p.id).unwrap_or(false)
+}
+
 impl From<(&Vec<Rc<Project>>, &Vec<Rc<Workspace>>, &TimeEntryInner)> for TimeEntry {
     fn from(value: (&Vec<Rc<Project>>, &Vec<Rc<Workspace>>, &TimeEntryInner)) -> TimeEntry {
         let p = value.0;
@@ -53,11 +58,7 @@ impl From<(&Vec<Rc<Project>>, &Vec<Rc<Workspace>>, &TimeEntryInner)> for TimeEnt
             .find(|ws| ws.id == tjson.wid)
             .expect("Workspaces was not filled correctly")
             .clone();
-        let project = p
-            .iter()
-            .find(|p| p.id == tjson.pid)
-            .expect("Projects was not filled correctly")
-            .clone();
+        let project = p.iter().find(|p| project_cmp(p, tjson.pid)).cloned();
         TimeEntry {
             id: tjson.id,
             guid: tjson.guid,
@@ -77,7 +78,7 @@ impl From<(&Vec<Rc<Project>>, &Vec<Rc<Workspace>>, &TimeEntryInner)> for TimeEnt
 #[derive(Deserialize, Debug)]
 pub struct StartEntryReturnInner {
     id: i64,
-    pid: i64,
+    pid: Option<i64>,
     wid: i64,
     billable: bool,
     start: chrono::DateTime<chrono::Utc>,
@@ -94,7 +95,7 @@ pub struct TimeEntryInner {
     /// Workspace id
     pub wid: i64,
     /// Project id
-    pub pid: i64,
+    pub pid: Option<i64>,
     /// Start time, will be parsed into Utc
     pub start: chrono::DateTime<chrono::Utc>,
     /// End time (optional), will be parsed into Utc
@@ -125,7 +126,7 @@ impl From<TimeEntry> for TimeEntryUpdate {
                 id: t.id,
                 guid: t.guid,
                 wid: t.workspace.id,
-                pid: t.project.id,
+                pid: t.project.map(|v| v.id),
                 start: t.start,
                 stop: t.stop,
                 duration: t.duration,
