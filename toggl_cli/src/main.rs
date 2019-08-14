@@ -232,6 +232,8 @@ fn run_matches(
 ) -> Result<(), String> {
     if let Some(matches) = matches.subcommand_matches("time_entry") {
         run_matches_time_entry(matches, t, projects)
+    } else if let Some(matches) = matches.subcommand_matches("te") {
+        run_matches_time_entry(matches, t, projects)
     } else {
         Ok(())
     }
