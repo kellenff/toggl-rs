@@ -37,7 +37,7 @@ fn print_current(t: &Toggl) {
         println!(
             "{}: {}@{}, {} Running for: {}",
             Green.paint("Running"),
-            current.description.unwrap_or("".to_string()),
+            current.description.unwrap_or_else(|| "".to_string()),
             current
                 .project
                 .as_ref()
@@ -152,7 +152,7 @@ fn run_matches(
             .expect("Error");
         println!(
             "Started Time Entry: {} for Project {}",
-            title.unwrap_or("".to_string()),
+            title.unwrap_or_else(|| "".to_string()),
             project.as_ref().map(|v| v.name.as_ref()).unwrap_or("")
         );
         Ok(())
