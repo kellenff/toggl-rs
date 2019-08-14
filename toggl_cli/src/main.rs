@@ -1,6 +1,6 @@
 use ansi_term::Color::{Green, Red};
 use chrono;
-use clap::{App, Arg, ArgMatches};
+use clap::{App, Arg, ArgMatches, SubCommand};
 use std::fs;
 use std::rc::Rc;
 use toggl_rs::{TimeEntry, Toggl, TogglExt};
@@ -138,8 +138,8 @@ fn print_todays_timeentries(t: &Toggl) {
     );
 }
 
-fn run_matches(
-    matches: ArgMatches,
+fn run_matches_time_entry(
+    matches: &ArgMatches,
     t: &Toggl,
     projects: &toggl_rs::project::Projects,
 ) -> Result<(), String> {
@@ -225,6 +225,18 @@ fn run_matches(
     }
 }
 
+fn run_matches(
+    matches: ArgMatches,
+    t: &Toggl,
+    projects: &toggl_rs::project::Projects,
+) -> Result<(), String> {
+    if let Some(matches) = matches.subcommand_matches("time_entry") {
+        run_matches_time_entry(matches, t, projects)
+    } else {
+        Ok(())
+    }
+}
+
 fn main() {
     let credentials = fs::read_to_string("api_token")
         .expect("Please supply a file called api_token with your api_token");
@@ -235,8 +247,9 @@ fn main() {
         .map(|p| p.name.clone())
         .collect::<Vec<String>>();
 
-    let matches = App::new("toggl")
-        .about("Controls toggl")
+    let te_match = ["time_entry", "te"].iter().map(|v|
+        SubCommand::with_name(v)
+        .about("Modifies Time Entries")
         .arg(
             Arg::with_name("start")
                 .short("s")
@@ -271,7 +284,11 @@ fn main() {
                 .number_of_values(3)
                 .value_names(&["timeentry_number", "new_description", "new_project_id"])
                 .help("Edits the entry given by the first "),
-        )
+        ));
+
+    let matches = App::new("toggl")
+        .about("Controls toggl")
+        .subcommands(te_match)
         .get_matches();
 
     print_projects(&project_ids);
