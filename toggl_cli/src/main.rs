@@ -36,7 +36,7 @@ fn print_current(t: &Toggl) {
         println!(
             "{}: {}@{}, {} Running for: {}",
             Green.paint("Running"),
-            current.description,
+            current.description.unwrap_or("".to_string()),
             current.project.name,
             current.start.with_timezone(&chrono::Local).format("%H:%M"),
             format_duration(&running_for)
@@ -76,7 +76,7 @@ fn print_todays_timeentries(t: &Toggl) {
             idx + 1,
             start_format,
             stop_format,
-            i.description,
+            i.description.as_ref().unwrap_or(&"".to_string()),
             i.project.name,
             dur_format,
         );
@@ -131,12 +131,12 @@ fn run_matches(
     projects: &toggl_rs::project::Projects,
 ) -> Result<(), String> {
     if let Some(mut v) = matches.values_of("start") {
-        let title = v.next().unwrap_or("Default");
+        let title = v.next().map(|v| v.to_owned());
         let project_idx = v.next().and_then(|s| s.parse::<usize>().ok()).unwrap_or(0);
         let project = projects.get(project_idx);
         if let Some(p) = project {
-            t.start_entry(&title, &[], &p).expect("Error");
-            println!("Started Time Entry: {} for Project {}", title, (*p).name);
+            t.start_entry(title.to_owned(), &[], &p).expect("Error");
+            println!("Started Time Entry: {} for Project {}", title.unwrap_or("".to_string()), (*p).name);
             Ok(())
         } else {
             Err("Project not found".into())
@@ -156,7 +156,7 @@ fn run_matches(
         }
 
         entries.sort_by(|a, b| b.cmp(a)); //reverse it
-        t.start_entry(&entries[0].description, &[], &entries[0].project)
+        t.start_entry(entries[0].description.to_owned(), &[], &entries[0].project)
             .expect("API Error");
         Ok(())
     } else if let Some(id_string) = matches.value_of("delete") {
@@ -190,7 +190,7 @@ fn run_matches(
                 let project = projects[new_project.unwrap()].clone();
 
                 let mut entry = entries[id - 1].clone();
-                entry.description = new_description.unwrap().to_string();
+                entry.description = new_description.map(|v| v.to_string());
                 entry.project = project;
                 t.update_entry(entry).expect("API Error");
                 Ok(())

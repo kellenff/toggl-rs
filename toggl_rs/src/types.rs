@@ -20,7 +20,7 @@ pub struct TimeEntry {
     pub start: chrono::DateTime<chrono::Utc>,
     pub stop: Option<chrono::DateTime<chrono::Utc>>,
     pub duration: i64,
-    pub description: String,
+    pub description: Option<String>,
     pub duronly: bool,
     pub at: chrono::DateTime<chrono::Utc>,
 }
@@ -83,7 +83,7 @@ pub struct StartEntryReturnInner {
     start: chrono::DateTime<chrono::Utc>,
     tags: Option<Vec<String>>,
     duration: i64,
-    description: String,
+    description: Option<String>,
 }
 
 /// TimeEntry format that comes from the json api. Notice that it includes ids and not workspace/projects.
@@ -100,7 +100,7 @@ pub struct TimeEntryInner {
     /// End time (optional), will be parsed into Utc
     pub stop: Option<chrono::DateTime<chrono::Utc>>,
     pub duration: i64,
-    pub description: String,
+    pub description: Option<String>,
     pub duronly: bool,
     pub at: chrono::DateTime<chrono::Utc>,
 }

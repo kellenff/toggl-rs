@@ -15,7 +15,7 @@ struct StartEntry {
 
 #[derive(Serialize, Debug)]
 struct StartTimeEntry {
-    description: String,
+    description: Option<String>,
     tags: Vec<String>,
     pid: i64,
     created_with: String,
@@ -36,7 +36,7 @@ pub trait TimeEntryExt {
     /// Starts a time entry with the description, tags and a given project.
     fn start_entry(
         &self,
-        description: &str,
+        description: Option<String>,
         tags: &[String],
         p: &Project,
     ) -> Result<(), TogglError>;
@@ -98,13 +98,13 @@ impl TimeEntryExt for Toggl {
 
     fn start_entry(
         &self,
-        description: &str,
+        description: Option<String>,
         tags: &[String],
         p: &Project,
     ) -> Result<(), TogglError> {
         let t = StartEntry {
             time_entry: StartTimeEntry {
-                description: description.to_owned(),
+                description: description,
                 tags: tags.to_owned(),
                 pid: p.id,
                 created_with: "toggl-rs".to_string(),
