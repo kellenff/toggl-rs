@@ -241,9 +241,9 @@ fn main() {
             Arg::with_name("start")
                 .short("s")
                 .long("start")
-                .help("Starts a time entry with the appropriate id")
-                .number_of_values(2)
-                .value_names(&["description", "project_id"])
+                .help("Starts a time entry with the appropriate id (optional values description, projectid)")
+                .min_values(0)
+                .max_values(2)
                 .takes_value(true),
         )
         .arg(
