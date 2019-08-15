@@ -37,7 +37,7 @@ pub use crate::types::TimeEntry;
 /// Notice, that this will already query the api.
 impl Toggl {
     pub fn init(api_token: &str) -> Result<Toggl, crate::error::TogglError> {
-        let mut t = auth::init(api_token)?;
+        let mut t = Toggl::authenticate_api_token(api_token)?;
         t.fill_projects();
         Ok(t)
     }
