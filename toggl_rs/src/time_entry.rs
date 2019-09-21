@@ -52,10 +52,19 @@ pub trait TimeEntryExt {
 
     /// Update the time entry with all values that in the time entry. Notice that we need move semantics here.
     /// # Example
-    /// ```
-    /// let mut entry = t.get_current_entry();
-    /// entry.description = "test2".to_string();
-    /// t.update_entry(entry);
+    /// ```no_run
+    /// use toggl_rs::Toggl;
+    ///
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     use toggl_rs::time_entry::TimeEntryExt;
+    /// let t = Toggl::init("api_token")?;
+    ///
+    ///     let mut entry = t.get_running_entry()?.unwrap();
+    ///     entry.description = Some("test2".to_string());
+    ///     t.update_entry(entry)?;
+    ///
+    ///     Ok(())
+    /// }
     /// ```
     fn update_entry(&self, t: TimeEntry) -> Result<(), TogglError>;
 

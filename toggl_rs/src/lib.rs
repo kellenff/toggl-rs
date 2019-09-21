@@ -2,13 +2,24 @@
 //! Your main interaction with the api will be the Toggl struct. Methods are in the TogglExt trait including the main objects being `Project` and `TimeEntry`.
 //!
 //! # Example
-//! ```
-//! use toggl_rs::{init, TimeEntry, Toggl, TogglExt};
-//! let toggl = init(APITOKEN).expect("Could not connect to toggl");
-//! let project = toggl.projects[0];
-//! toggl.start_entry("test", &[], project);
-//! println!("{}", toggl.current_running_entry());
-//! toggl.stop_entry();
+//! ```no_run
+//! use toggl_rs::{TimeEntry, Toggl, TogglExt};
+//! use toggl_rs::time_entry::TimeEntryExt;
+//!
+//! const API_TOKEN: &str = "token";
+//!
+//! fn main() -> Result<(), Box<dyn std::error::Error>> {
+//!     let toggl = Toggl::init(API_TOKEN)?;
+//!     let project = toggl.projects[0].clone();
+//!
+//!     let _ = toggl.start_entry(Some(String::from("test")), &[], Some(project))?;
+//!
+//!     let current_entry = toggl.get_running_entry()?;
+//!     println!("{:?}", current_entry);
+//!     toggl.stop_entry(&current_entry.unwrap())?;
+//!
+//!     Ok(())
+//! }
 //! ```
 extern crate chrono;
 extern crate serde_json;

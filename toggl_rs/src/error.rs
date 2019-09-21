@@ -1,3 +1,5 @@
+use std::fmt;
+
 /// Error Value
 #[derive(Debug)]
 pub enum TogglError {
@@ -19,4 +21,17 @@ impl std::convert::From<reqwest::header::InvalidHeaderValue> for crate::error::T
     fn from(_e: reqwest::header::InvalidHeaderValue) -> crate::error::TogglError {
         crate::error::TogglError::AuthError("Could not parse Authentication api_token".to_owned())
     }
+}
+
+impl fmt::Display for TogglError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            TogglError::AuthError(e) => write!(f, "Authentication error: {}", e),
+            TogglError::ReqwestError(e) => write!(f, "Reqwest error: {}", e),
+            TogglError::NotImplemented => write!(f, "An unexpected error occurred"),
+        }
+    }
+}
+
+impl std::error::Error for TogglError {
 }
