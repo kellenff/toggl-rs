@@ -1,18 +1,15 @@
-# toggl-rs &emsp; [![Rustc Version 1.34.2+]][rustc]
+# toggl-rs
 
-This is a typed interface to [version 8 of the Toggl API](https://github.com/toggl/toggl_api_docs/blob/master/toggl_api.md). This is considered very much a work in progress, PRs and feedback encouraged!
+This is a typed interface to [version 8 of the Toggl API](https://github.com/toggl/toggl_api_docs/blob/master/toggl_api.md). This is considered very much a work in progress, PRs and feedback encouraged! The library can be found in the toggl_rs folder as we are using cargo workspaces.
 
 ## Getting Started
 
-There isn't currently a CLI, though that's currently planned.
+### CLI
+There is a simple CLI included in the toggl_cli workspace. For usage of the CLI please see its help menu (cargo run -- --help).
 
 ### Prerequisites
 
 This library targets the latest version of `rust`, though previous versions may build as well.
-
-### Running the tests
-
-`cd $REPO_DIR && cargo test`
 
 ## Contributing
 
