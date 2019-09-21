@@ -194,32 +194,22 @@ fn run_matches_time_entry(
             Err("Could not parse id".into())
         }
     } else if let Some(mut new) = matches.values_of("edit") {
-        let id: Option<usize> = new.next().and_then(|s| s.parse::<usize>().ok());
+        let id = new.next().and_then(|s| s.parse::<usize>().ok()).expect("Argument requirement not fulfilled");
         let new_description = new.next();
-        let new_project = new.next().and_then(|s| s.parse::<usize>().ok());
+        let new_project_id = new.next().and_then(|s| s.parse::<usize>().ok()).expect("Project is required");
 
         let entries = get_todays_stored_entries(t);
-        if entries.is_empty() {
-            Err("Not enough entries stored to edit".into())
-        } else if let Some(id) = id {
-            if (id - 1 < entries.len())
-                & (new_description.is_some())
-                & (new_project.is_some())
-                & (new_project.unwrap_or(0) < projects.len())
-            {
-                let project = projects[new_project.unwrap()].clone();
 
-                let mut entry = entries[id - 1].clone();
-                entry.description = new_description.map(|v| v.to_string());
-                entry.project = Some(project);
-                t.update_entry(entry).expect("API Error");
-                Ok(())
-            } else {
-                Err("Argument requirement not fulfilled".into())
-            }
-        } else {
-            Err("Could not parse values".into())
-        }
+        assert!(!entries.is_empty(), "Not enough entries stored to edit");
+        assert!(id - 1 < entries.len(), "No valid entries to swap");
+
+        let project = projects[new_project_id].clone();
+
+        let mut entry = entries[id - 1].clone();
+        entry.description = new_description.map(|v| v.to_string());
+        entry.project = Some(project);
+        t.update_entry(entry).expect("API Error");
+        Ok(())
     } else {
         // nothing was parsed which is fine
         Ok(())
@@ -241,6 +231,49 @@ fn run_matches(
 }
 
 fn main() {
+    let te_match = ["time_entry", "te"].iter().map(|v|
+        SubCommand::with_name(v)
+            .about("Modifies Time Entries")
+            .arg(
+                Arg::with_name("start")
+                    .short("s")
+                    .long("start")
+                    .help("Starts a time entry with the appropriate id (optional values description, projectid)")
+                    .min_values(0)
+                    .max_values(2)
+                    .takes_value(true),
+            )
+            .arg(
+                Arg::with_name("stop")
+                    .short("p")
+                    .long("stop")
+                    .help("Stops the current time entry"),
+            )
+            .arg(Arg::with_name("swap").short("w").long("swap").help(
+                "Stops the current entry and starts the entry that was running before the current one",
+            ))
+            .arg(
+                Arg::with_name("delete")
+                    .short("d")
+                    .long("delete")
+                    .number_of_values(1)
+                    .value_names(&["project_id"])
+                    .takes_value(true)
+                    .help("Deletes the entry with the idea from the current day"),
+            )
+            .arg(
+                Arg::with_name("edit")
+                    .short("e")
+                    .long("edit")
+                    .number_of_values(3)
+                    .value_names(&["timeentry_number", "new_description", "new_project_id"])
+                    .help("Edits the entry given by the first "),
+            ));
+    let matches = App::new("toggl")
+        .about("Controls toggl")
+        .subcommands(te_match)
+        .get_matches();
+
     let credentials = fs::read_to_string("api_token")
         .expect("Please supply a file called api_token with your api_token");
     let toggl = Toggl::init(&credentials).expect("Could not connect to toggl");
@@ -249,50 +282,6 @@ fn main() {
         .iter()
         .map(|p| p.name.clone())
         .collect::<Vec<String>>();
-
-    let te_match = ["time_entry", "te"].iter().map(|v|
-        SubCommand::with_name(v)
-        .about("Modifies Time Entries")
-        .arg(
-            Arg::with_name("start")
-                .short("s")
-                .long("start")
-                .help("Starts a time entry with the appropriate id (optional values description, projectid)")
-                .min_values(0)
-                .max_values(2)
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name("stop")
-                .short("p")
-                .long("stop")
-                .help("Stops the current time entry"),
-        )
-        .arg(Arg::with_name("swap").short("w").long("swap").help(
-            "Stops the current entry and starts the entry that was running before the current one",
-        ))
-        .arg(
-            Arg::with_name("delete")
-                .short("d")
-                .long("delete")
-                .number_of_values(1)
-                .value_names(&["project_id"])
-                .takes_value(true)
-                .help("Deletes the entry with the idea from the current day"),
-        )
-        .arg(
-            Arg::with_name("edit")
-                .short("e")
-                .long("edit")
-                .number_of_values(3)
-                .value_names(&["timeentry_number", "new_description", "new_project_id"])
-                .help("Edits the entry given by the first "),
-        ));
-
-    let matches = App::new("toggl")
-        .about("Controls toggl")
-        .subcommands(te_match)
-        .get_matches();
 
     print_projects(&project_ids);
     if let Err(s) = run_matches(matches, &toggl, projects) {
