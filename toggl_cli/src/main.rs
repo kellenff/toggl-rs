@@ -4,6 +4,7 @@ use clap::{App, Arg, ArgMatches, SubCommand};
 use std::fs;
 use std::rc::Rc;
 use toggl_rs::{TimeEntry, Toggl, TogglExt};
+use toggl_rs::project::Project;
 
 fn print_projects(ids: &[String]) {
     print!("Projects: ");
@@ -141,7 +142,7 @@ fn print_todays_timeentries(t: &Toggl) {
 fn run_matches_time_entry(
     matches: &ArgMatches,
     t: &Toggl,
-    projects: &toggl_rs::project::Projects,
+    projects: &[Rc<Project>],
 ) -> Result<(), String> {
     if let Some(mut v) = matches.values_of("start") {
         let title = v.next().map(|v| v.to_owned());
@@ -228,7 +229,7 @@ fn run_matches_time_entry(
 fn run_matches(
     matches: ArgMatches,
     t: &Toggl,
-    projects: &toggl_rs::project::Projects,
+    projects: &[Rc<Project>],
 ) -> Result<(), String> {
     if let Some(matches) = matches.subcommand_matches("time_entry") {
         run_matches_time_entry(matches, t, projects)

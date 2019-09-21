@@ -1,10 +1,7 @@
 use crate::error::TogglError;
 
 use crate::project::Project;
-use crate::types::{
-    DeleteEntryReturn, StartEntryReturn, StopEntryReturn, TimeEntry, TimeEntryRangeReturn,
-    TimeEntryReturn, TimeEntryUpdate,
-};
+use crate::types::{DeleteEntryReturn, StartEntryReturn, StopEntryReturn, TimeEntry, TimeEntryRange, TimeEntryReturn, TimeEntryUpdate, TimeEntryRangeSlice};
 use crate::Query;
 use crate::Toggl;
 
@@ -74,7 +71,7 @@ pub trait TimeEntryExt {
 
 trait TimeEntryTrait {
     /// Converts an array of TimeEntryReturn to Vector of TimeEntry discarding any elements where the data of Return<TimeEntryInner> is None
-    fn convert_response(&self, t: &TimeEntryRangeReturn) -> Vec<TimeEntry>;
+    fn convert_response(&self, t: TimeEntryRangeSlice) -> Vec<TimeEntry>;
 
     fn convert_single(&self, res: &TimeEntryReturn) -> Option<TimeEntry>;
 }
@@ -101,8 +98,8 @@ impl TimeEntryExt for Toggl {
             reqwest::Url::parse_with_params("https://www.toggl.com/api/v8/time_entries", entries)
                 .expect("Error in parsing URL");
 
-        let res: TimeEntryRangeReturn = self.get(url)?;
-        Ok(self.convert_response(&res))
+        let res: TimeEntryRange = self.get(url)?;
+        Ok(self.convert_response(res.as_slice()))
     }
 
     fn start_entry<T: AsRef<Project>>(
@@ -113,7 +110,7 @@ impl TimeEntryExt for Toggl {
     ) -> Result<(), TogglError> {
         let t = StartEntry {
             time_entry: StartTimeEntry {
-                description: description,
+                description,
                 tags: tags.to_owned(),
                 pid: p.map(|v| v.as_ref().id),
                 created_with: "toggl-rs".to_string(),
@@ -167,7 +164,7 @@ impl TimeEntryExt for Toggl {
 }
 
 impl TimeEntryTrait for Toggl {
-    fn convert_response(&self, res: &TimeEntryRangeReturn) -> Vec<TimeEntry> {
+    fn convert_response(&self, res: TimeEntryRangeSlice) -> Vec<TimeEntry> {
         res.iter()
             .map(|tjson| (self.projects.as_ref(), &self.user.workspaces, tjson).into())
             .collect()
