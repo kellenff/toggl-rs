@@ -22,6 +22,7 @@ This project uses [Rust's semantic versioning](https://github.com/rust-lang/rfcs
 ## Authors
 
 - **Kellen Frodelius-Fujimoto** - *Initial work* - [@rakenodiax](https://github.com/rakenodiax/)
+- **Narfinger** - *Implement CLI and entry endpiont* - [@Narfinger](https://github.com/Narfinger)
 
 ## License
 
