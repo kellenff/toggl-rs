@@ -1,5 +1,7 @@
 # toggl-rs
 
+[![Build Status](https://travis-ci.com/rakenodiax/toggl-rs.svg?branch=master)](https://travis-ci.com/rakenodiax/toggl-rs)
+
 This is a typed interface to [version 8 of the Toggl API](https://github.com/toggl/toggl_api_docs/blob/master/toggl_api.md). This is considered very much a work in progress, PRs and feedback encouraged! The library can be found in the toggl_rs folder as we are using cargo workspaces.
 
 ## Getting Started
