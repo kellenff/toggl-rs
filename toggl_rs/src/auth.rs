@@ -16,9 +16,9 @@ pub struct InitResponse {
 
 impl Toggl {
     pub fn authenticate_api_token(api_token: &str) -> Result<Toggl, crate::error::TogglError> {
-        let client = reqwest::Client::new();
+        let client = reqwest::blocking::Client::new();
         let ap = api_token.trim_end();
-        let mut resp = client
+        let resp = client
             .get("https://www.toggl.com/api/v8/me")
             .basic_auth(ap, Some("api_token"))
             .send()?;
@@ -32,14 +32,11 @@ impl Toggl {
                 projects: Vec::new(),
             })
         } else {
-            Err(crate::error::TogglError::AuthError(
-                format!(
-                    "Authentication not succeded: Status {}, Text {}",
-                    resp.status(),
-                    resp.text().unwrap()
-                )
-                .to_owned(),
-            ))
+            Err(crate::error::TogglError::AuthError(format!(
+                "Authentication not succeded: Status {}, Text {}",
+                resp.status(),
+                resp.text().unwrap()
+            )))
         }
     }
 }

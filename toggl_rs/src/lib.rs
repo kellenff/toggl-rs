@@ -58,7 +58,7 @@ impl Toggl {
 /// The main struct to interact with.
 pub struct Toggl {
     api_token: String,
-    client: reqwest::Client,
+    client: reqwest::blocking::Client,
     /// Information of the user.
     pub user: crate::user::User,
     /// A handler to all projects currently available in Toggl.
@@ -91,7 +91,7 @@ impl Query for Toggl {
         &self,
         url: U,
     ) -> Result<T, crate::error::TogglError> {
-        let mut resp = self
+        let resp = self
             .client
             .get(url)
             .basic_auth(&self.api_token, Some("api_token"))
@@ -109,7 +109,7 @@ impl Query for Toggl {
             .json(t)
             .basic_auth(&self.api_token, Some("api_token"))
             .send()
-            .and_then(|mut v| v.json::<S>())
+            .and_then(|v| v.json::<S>())
             .map_err(|v| v.into())
     }
 
@@ -123,7 +123,7 @@ impl Query for Toggl {
             .json(t)
             .basic_auth(&self.api_token, Some("api_token"))
             .send()
-            .and_then(|mut v| v.json())
+            .and_then(|v| v.json())
             .map_err(|e| e.into())
     }
 
@@ -135,7 +135,7 @@ impl Query for Toggl {
             .delete(url)
             .basic_auth(&self.api_token, Some("api_token"))
             .send()
-            .and_then(|mut v| v.json())
+            .and_then(|v| v.json())
             .map_err(|e| e.into())
     }
 }
