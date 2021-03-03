@@ -3,7 +3,7 @@ use crate::workspace::Workspace;
 use crate::Toggl;
 
 #[derive(Deserialize, Debug, Serialize)]
-pub struct UserJSON {
+pub struct UserJson {
     pub fullname: String,
     pub workspaces: Vec<Workspace>,
 }
@@ -11,7 +11,7 @@ pub struct UserJSON {
 #[derive(Deserialize, Debug, Serialize)]
 pub struct InitResponse {
     since: i64,
-    pub data: UserJSON,
+    pub data: UserJson,
 }
 
 impl Toggl {
@@ -38,8 +38,7 @@ impl Toggl {
                     "Authentication not succeded: Status {}, Text {}",
                     resp.status(),
                     resp.text().unwrap()
-                )
-                .to_owned(),
+                ),
             ))
         }
     }

@@ -1,5 +1,4 @@
 use ansi_term::Color::{Green, Red};
-use chrono;
 use clap::{App, Arg, ArgMatches, SubCommand};
 use std::fs;
 use std::rc::Rc;
