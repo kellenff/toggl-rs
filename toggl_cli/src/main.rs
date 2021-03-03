@@ -100,6 +100,7 @@ fn print_todays_timeentries(t: &Toggl) {
             .sum::<i64>(),
     );
     let dummy_project = Rc::new(toggl_rs::project::Project {
+        cid: -1,
         id: -1,
         name: "No Project".to_string(),
         billable: false,

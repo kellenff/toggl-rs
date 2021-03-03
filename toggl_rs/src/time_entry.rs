@@ -166,13 +166,13 @@ impl TimeEntryExt for Toggl {
 impl TimeEntryTrait for Toggl {
     fn convert_response(&self, res: TimeEntryRangeSlice) -> Vec<TimeEntry> {
         res.iter()
-            .map(|tjson| (self.projects.as_ref(), &self.user.workspaces, tjson).into())
+            .map(|tjson| (self.clients.as_ref(), self.projects.as_ref(), &self.user.workspaces, tjson).into())
             .collect()
     }
 
     fn convert_single(&self, res: &TimeEntryReturn) -> Option<TimeEntry> {
         if let Some(ref t) = res.data {
-            Some((&self.projects, &self.user.workspaces, t).into())
+            Some((&self.clients, &self.projects, &self.user.workspaces, t).into())
         } else {
             None
         }

@@ -29,6 +29,7 @@ impl Toggl {
                 api_token: ap.to_owned(),
                 client,
                 user: init_response.into(),
+                clients: Vec::new(),
                 projects: Vec::new(),
             })
         } else {

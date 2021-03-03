@@ -10,6 +10,7 @@
 //!
 //! fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!     let toggl = Toggl::init(API_TOKEN)?;
+//!     let client = toggl.clients[0].clone();
 //!     let project = toggl.projects[0].clone();
 //!
 //!     let _ = toggl.start_entry(Some(String::from("test")), &[], Some(project))?;
@@ -32,6 +33,7 @@ use std::rc::Rc;
 
 mod auth;
 mod error;
+pub mod client;
 pub mod project;
 pub mod time_entry;
 mod types;
@@ -39,6 +41,7 @@ mod user;
 mod workspace;
 
 pub use crate::error::TogglError;
+use crate::client::ClientTrait;
 use crate::project::ProjectTrait;
 pub use crate::time_entry::TimeEntryExt as TogglExt;
 pub use crate::types::TimeEntry;
@@ -49,6 +52,7 @@ pub use crate::types::TimeEntry;
 impl Toggl {
     pub fn init(api_token: &str) -> Result<Toggl, crate::error::TogglError> {
         let mut t = Toggl::authenticate_api_token(api_token)?;
+        t.fill_clients();
         t.fill_projects();
         Ok(t)
     }
@@ -61,6 +65,8 @@ pub struct Toggl {
     client: reqwest::Client,
     /// Information of the user.
     pub user: crate::user::User,
+    /// A handler to all clients currently available in Toggl.
+    pub clients: Vec<Rc<crate::client::Client>>,
     /// A handler to all projects currently available in Toggl.
     pub projects: Vec<Rc<crate::project::Project>>,
 }

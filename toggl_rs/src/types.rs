@@ -1,3 +1,4 @@
+use crate::client::Client;
 use crate::project::Project;
 use crate::workspace::Workspace;
 use std::cmp::Ordering;
@@ -16,6 +17,7 @@ pub struct TimeEntry {
     pub id: i64,
     pub guid: uuid::Uuid,
     pub workspace: Rc<Workspace>,
+    pub client: Option<Rc<Client>>,
     pub project: Option<Rc<Project>>,
     pub start: chrono::DateTime<chrono::Utc>,
     pub stop: Option<chrono::DateTime<chrono::Utc>>,
@@ -48,21 +50,29 @@ fn project_cmp(p: &Project, tjsonid: Option<i64>) -> bool {
     tjsonid.map(|v| v == p.id).unwrap_or(false)
 }
 
-impl From<(&Vec<Rc<Project>>, &Vec<Rc<Workspace>>, &TimeEntryInner)> for TimeEntry {
-    fn from(value: (&Vec<Rc<Project>>, &Vec<Rc<Workspace>>, &TimeEntryInner)) -> TimeEntry {
-        let p = value.0;
-        let w = value.1;
-        let tjson = value.2;
+/// Compares if the client id and the possible client id are the same, if `tjsonid` is None, we return false
+fn client_cmp(c: &Client, tjsonid: Option<i64>) -> bool {
+    tjsonid.map(|v| v == c.id).unwrap_or(false)
+}
+
+impl From<(&Vec<Rc<Client>>, &Vec<Rc<Project>>, &Vec<Rc<Workspace>>, &TimeEntryInner)> for TimeEntry {
+    fn from(value: (&Vec<Rc<Client>>, &Vec<Rc<Project>>, &Vec<Rc<Workspace>>, &TimeEntryInner)) -> TimeEntry {
+        let c = value.0;
+        let p = value.1;
+        let w = value.2;
+        let tjson = value.3;
         let workspace = w
             .iter()
             .find(|ws| ws.id == tjson.wid)
             .expect("Workspaces was not filled correctly")
             .clone();
         let project = p.iter().find(|p| project_cmp(p, tjson.pid)).cloned();
+        let client = c.iter().find(|c| client_cmp(c, project.as_ref().map(|v|v.cid))).cloned();
         TimeEntry {
             id: tjson.id,
             guid: tjson.guid,
             workspace,
+            client,
             project,
             start: tjson.start,
             stop: tjson.stop,
