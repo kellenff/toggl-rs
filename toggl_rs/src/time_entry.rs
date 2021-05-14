@@ -95,7 +95,7 @@ impl TimeEntryExt for Toggl {
         }
 
         let url =
-            reqwest::Url::parse_with_params("https://www.toggl.com/api/v8/time_entries", entries)
+            reqwest::Url::parse_with_params("https://api.track.toggl.com/api/v8/time_entries", entries)
                 .expect("Error in parsing URL");
 
         let res: TimeEntryRange = self.get(url)?;
@@ -117,7 +117,7 @@ impl TimeEntryExt for Toggl {
             },
         };
         self.post::<&str, StartEntry, StartEntryReturn>(
-            "https://www.toggl.com/api/v8/time_entries/start",
+            "https://api.track.toggl.com/api/v8/time_entries/start",
             &t,
         )?;
         Ok(())
@@ -125,7 +125,7 @@ impl TimeEntryExt for Toggl {
 
     fn stop_entry(&self, t: &TimeEntry) -> Result<(), TogglError> {
         self.get::<&str, StopEntryReturn>(&format!(
-            "https://www.toggl.com/api/v8/time_entries/{}/stop",
+            "https://api.track.toggl.com/api/v8/time_entries/{}/stop",
             t.id
         ))?;
         Ok(())
@@ -133,14 +133,14 @@ impl TimeEntryExt for Toggl {
 
     fn get_entry_details(&self, id: i64) -> Result<Option<TimeEntry>, TogglError> {
         self.get::<&str, TimeEntryReturn>(&format!(
-            "https://www.toggl.com/api/v8/time_entries/{}",
+            "https://api.track.toggl.com/api/v8/time_entries/{}",
             id
         ))
         .map(|r| self.convert_single(&r))
     }
 
     fn get_running_entry(&self) -> Result<Option<TimeEntry>, TogglError> {
-        self.get("https://www.toggl.com/api/v8/time_entries/current")
+        self.get("https://api.track.toggl.com/api/v8/time_entries/current")
             .map(|r| self.convert_single(&r))
     }
 
@@ -148,7 +148,7 @@ impl TimeEntryExt for Toggl {
         let id = t.id;
         let entry: TimeEntryUpdate = t.into();
         self.put::<&str, TimeEntryUpdate, TimeEntryReturn>(
-            &format!("https://www.toggl.com/api/v8/time_entries/{}", id),
+            &format!("https://api.track.toggl.com/api/v8/time_entries/{}", id),
             &entry,
         )?;
         Ok(())
@@ -156,7 +156,7 @@ impl TimeEntryExt for Toggl {
 
     fn delete_entry(&self, t: &TimeEntry) -> Result<(), TogglError> {
         self.delete::<&str, DeleteEntryReturn>(&format!(
-            "https://www.toggl.com/api/v8/time_entries/{}",
+            "https://api.track.toggl.com/api/v8/time_entries/{}",
             t.id
         ))?;
         Ok(())
