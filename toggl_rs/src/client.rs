@@ -22,7 +22,7 @@ impl ClientTrait for Toggl {
             .workspaces
             .iter()
             .flat_map(|w| {
-                let url = format!("https://www.toggl.com/api/v8/workspaces/{}/clients", w.id);
+                let url = format!("https://api.track.toggl.com/api/v8/workspaces/{}/clients", w.id);
                 let res: Vec<Client> = self.get(&url).expect("Error in querying");
                 res.into_iter().map(Rc::new)
             })
