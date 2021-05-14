@@ -19,7 +19,7 @@ impl Toggl {
         let client = reqwest::Client::new();
         let ap = api_token.trim_end();
         let mut resp = client
-            .get("https://www.toggl.com/api/v8/me")
+            .get("https://api.track.toggl.com/api/v8/me")
             .basic_auth(ap, Some("api_token"))
             .send()?;
         if resp.status().is_success() {
