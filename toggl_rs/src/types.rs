@@ -1,3 +1,4 @@
+use crate::client::Client;
 use crate::project::Project;
 use crate::workspace::Workspace;
 use std::cmp::Ordering;
@@ -16,6 +17,7 @@ pub struct TimeEntry {
     pub id: i64,
     pub guid: uuid::Uuid,
     pub workspace: Rc<Workspace>,
+    pub client: Option<Rc<Client>>,
     pub project: Option<Rc<Project>>,
     pub start: chrono::DateTime<chrono::Utc>,
     pub stop: Option<chrono::DateTime<chrono::Utc>>,
@@ -48,28 +50,41 @@ fn project_cmp(p: &Project, tjsonid: Option<i64>) -> bool {
     tjsonid.map(|v| v == p.id).unwrap_or(false)
 }
 
-impl From<(&Vec<Rc<Project>>, &Vec<Rc<Workspace>>, &TimeEntryInner)> for TimeEntry {
-    fn from(value: (&Vec<Rc<Project>>, &Vec<Rc<Workspace>>, &TimeEntryInner)) -> TimeEntry {
-        let p = value.0;
-        let w = value.1;
-        let tjson = value.2;
-        let workspace = w
+/// Compares if the client id and the possible client id are the same, if `tjsonid` is None, we return false
+fn client_cmp(c: &Client, tjsonid: Option<i64>) -> bool {
+    tjsonid.map(|v| v == c.id).unwrap_or(false)
+}
+
+impl From<TimeEntryWrapper<'_>> for TimeEntry {
+    fn from(value: TimeEntryWrapper) -> TimeEntry {
+        let workspace = value
+            .workspaces
             .iter()
-            .find(|ws| ws.id == tjson.wid)
+            .find(|ws| ws.id == value.tjson.wid)
             .expect("Workspaces was not filled correctly")
             .clone();
-        let project = p.iter().find(|p| project_cmp(p, tjson.pid)).cloned();
+        let project = value
+            .projects
+            .iter()
+            .find(|p| project_cmp(p, value.tjson.pid))
+            .cloned();
+        let client = value
+            .clients
+            .iter()
+            .find(|c| client_cmp(c, project.as_ref().map(|v| v.cid)))
+            .cloned();
         TimeEntry {
-            id: tjson.id,
-            guid: tjson.guid,
+            id: value.tjson.id,
+            guid: value.tjson.guid,
             workspace,
+            client,
             project,
-            start: tjson.start,
-            stop: tjson.stop,
-            duration: tjson.duration,
-            description: tjson.description.clone(),
-            duronly: tjson.duronly,
-            at: tjson.at,
+            start: value.tjson.start,
+            stop: value.tjson.stop,
+            duration: value.tjson.duration,
+            description: value.tjson.description.clone(),
+            duronly: value.tjson.duronly,
+            at: value.tjson.at,
         }
     }
 }
@@ -135,6 +150,30 @@ impl From<TimeEntry> for TimeEntryUpdate {
                 duronly: t.duronly,
                 at: t.at,
             },
+        }
+    }
+}
+
+// Wrapper containing everything needed to construct a TimeEntry
+pub struct TimeEntryWrapper<'a> {
+    clients: &'a [Rc<Client>],
+    projects: &'a [Rc<Project>],
+    workspaces: &'a [Rc<Workspace>],
+    tjson: &'a TimeEntryInner,
+}
+
+impl<'a> TimeEntryWrapper<'a> {
+    pub fn new(
+        clients: &'a [Rc<Client>],
+        projects: &'a [Rc<Project>],
+        workspaces: &'a [Rc<Workspace>],
+        tjson: &'a TimeEntryInner,
+    ) -> Self {
+        TimeEntryWrapper {
+            clients,
+            projects,
+            workspaces,
+            tjson,
         }
     }
 }

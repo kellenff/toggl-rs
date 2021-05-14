@@ -11,6 +11,7 @@ pub struct Project {
     pub name: String,
     pub billable: bool,
     pub active: bool,
+    pub cid: i64,
 }
 
 pub trait ProjectTrait {
